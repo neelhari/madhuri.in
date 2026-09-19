@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { PRODUCTS, CATEGORIES } from '../data/products';
 
 export const CategoryPage = ({ categoryId = 'all', navigate }) => {
   const [activeCategory, setActiveCategory] = useState(categoryId || 'all');
-  const [sortBy, setSortBy] = useState('popular');
-  const [filterCutType, setFilterCutType] = useState('all');
 
   const currentCategoryInfo = CATEGORIES.find((c) => c.id === activeCategory);
 
@@ -18,38 +16,22 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
       list = list.filter((p) => p.category === activeCategory);
     }
 
-    // Cut type filter
-    if (filterCutType === 'curry') {
-      list = list.filter((p) => p.name.toLowerCase().includes('curry'));
-    } else if (filterCutType === 'boneless') {
-      list = list.filter((p) => p.name.toLowerCase().includes('boneless'));
-    }
-
-    // Sorting
-    if (sortBy === 'price-asc') {
-      list.sort((a, b) => a.weights[0].price - b.weights[0].price);
-    } else if (sortBy === 'price-desc') {
-      list.sort((a, b) => b.weights[0].price - a.weights[0].price);
-    } else if (sortBy === 'discount') {
-      list.sort((a, b) => b.weights[0].discount - a.weights[0].discount);
-    } else {
-      // Popular (rating * reviewCount)
-      list.sort((a, b) => b.rating * b.reviewCount - a.rating * a.reviewCount);
-    }
+    // Default sort by popular
+    list.sort((a, b) => b.rating * b.reviewCount - a.rating * a.reviewCount);
 
     return list;
-  }, [activeCategory, filterCutType, sortBy]);
+  }, [activeCategory]);
 
   return (
     <div className="category-page animate-fade-in">
-      <div className="app-container">
-        {/* 1. PROMOTIONAL BANNER (Immediately below minimal header) */}
-        <div
-          className="category-promo-banner"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80')`
-          }}
-        >
+      {/* 1. FULL-WIDTH PROMOTIONAL BANNER (Starts immediately below header, touches left & right edges, zero gap) */}
+      <div
+        className="category-promo-banner-full"
+        style={{
+          backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80')`
+        }}
+      >
+        <div className="app-container promo-content-wrap">
           <div className="promo-banner-content">
             <span className="promo-banner-tag">WEEKEND SPECIAL</span>
             <h2 className="promo-banner-title">Prime Cuts. Up to 21% Off.</h2>
@@ -62,7 +44,10 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
             </button>
           </div>
         </div>
+      </div>
 
+      {/* CATEGORY CONTENT */}
+      <div className="app-container category-main-container">
         {/* 2. HORIZONTAL SCROLLING CATEGORY NAMES */}
         <div className="category-tabs-bar">
           <button
@@ -96,57 +81,16 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
           </p>
         </div>
 
-        {/* 4. FILTER / SORT: All Types | Curry Cut | Boneless & Sort: Most Popular */}
-        <div className="controls-bar">
-          <div className="cut-type-filters">
-            <button
-              className={`filter-btn-pill ${filterCutType === 'all' ? 'active' : ''}`}
-              onClick={() => setFilterCutType('all')}
-            >
-              All Types
-            </button>
-            <button
-              className={`filter-btn-pill ${filterCutType === 'curry' ? 'active' : ''}`}
-              onClick={() => setFilterCutType('curry')}
-            >
-              Curry Cut
-            </button>
-            <button
-              className={`filter-btn-pill ${filterCutType === 'boneless' ? 'active' : ''}`}
-              onClick={() => setFilterCutType('boneless')}
-            >
-              Boneless
-            </button>
-          </div>
-
-          <div className="sort-dropdown-wrap">
-            <ArrowUpDown size={15} className="sort-icon" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
-            >
-              <option value="popular">Sort: Most Popular</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="discount">Highest Discount</option>
-            </select>
-          </div>
-        </div>
-
-        {/* 5. PRODUCT GRID */}
+        {/* 4. PRODUCT GRID (Filter completely removed) */}
         {filteredProducts.length === 0 ? (
           <div className="empty-category-view">
             <h3>No products found</h3>
-            <p>Try switching categories or clearing active filters.</p>
+            <p>Try switching categories to view available fresh cuts.</p>
             <button
               className="btn btn-primary"
-              onClick={() => {
-                setActiveCategory('all');
-                setFilterCutType('all');
-              }}
+              onClick={() => setActiveCategory('all')}
             >
-              Reset Filters
+              Show All Cuts
             </button>
           </div>
         ) : (
@@ -164,176 +108,35 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
 
       <style>{`
         .category-page {
-          padding-top: 14px;
+          padding-top: 0 !important; /* Zero gap between header and banner */
           padding-bottom: 36px;
         }
 
-        .category-intro-section {
-          margin-bottom: 14px;
-        }
-
-        .cat-page-title {
-          font-size: 1.35rem;
-          font-weight: 800;
-          color: var(--charcoal);
-          line-height: 1.2;
-          margin-bottom: 4px;
-        }
-
-        .cat-page-desc {
-          font-size: 0.82rem;
-          color: var(--text-muted);
-          max-width: 680px;
-          line-height: 1.4;
-        }
-
-        .category-tabs-bar {
-          display: flex;
-          gap: 8px;
-          overflow-x: auto;
-          padding-bottom: 4px;
-          margin-bottom: 14px;
-          scrollbar-width: none;
-        }
-
-        .category-tabs-bar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .cat-tab-chip {
-          padding: 8px 18px;
-          border-radius: var(--radius-pill);
-          background: var(--surface-white);
-          border: 1.5px solid var(--border-color);
-          font-size: 0.875rem;
-          font-weight: 700;
-          color: var(--text-dark);
-          white-space: nowrap;
-          transition: all var(--transition-fast);
-        }
-
-        .cat-tab-chip:hover {
-          border-color: var(--primary-green);
-        }
-
-        .cat-tab-chip.active {
-          background-color: var(--primary-green);
-          color: #FFFFFF;
-          border-color: var(--primary-green);
-          box-shadow: 0 2px 8px rgba(0, 103, 56, 0.2);
-        }
-
-        .controls-bar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 22px;
-          padding: 12px 16px;
-          background: var(--surface-white);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-        }
-
-        .cut-type-filters {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .filter-btn-pill {
-          padding: 5px 12px;
-          border-radius: var(--radius-pill);
-          font-size: 0.8rem;
-          font-weight: 600;
-          background: var(--bg-main);
-          color: var(--text-muted);
-          border: 1px solid transparent;
-          transition: all var(--transition-fast);
-        }
-
-        .filter-btn-pill:hover {
-          color: var(--text-dark);
-        }
-
-        .filter-btn-pill.active {
-          background: var(--surface-light-green);
-          color: var(--primary-green);
-          font-weight: 700;
-          border-color: var(--secondary-green);
-        }
-
-        .sort-dropdown-wrap {
+        /* Full-width promotional banner */
+        .category-promo-banner-full {
           position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .sort-icon {
-          position: absolute;
-          left: 10px;
-          color: var(--text-muted);
-          pointer-events: none;
-        }
-
-        .sort-select {
-          padding: 6px 12px 6px 32px;
-          border-radius: var(--radius-pill);
-          border: 1.5px solid var(--border-color);
-          background: var(--bg-main);
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: var(--text-dark);
-          cursor: pointer;
-        }
-
-        .sort-select:focus {
-          border-color: var(--primary-green);
-          outline: none;
-        }
-
-        .empty-category-view {
-          text-align: center;
-          padding: 60px 20px;
-          background: #FFFFFF;
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--border-color);
-        }
-
-        .empty-category-view h3 {
-          font-size: 1.25rem;
-          color: var(--text-dark);
-          margin-bottom: 6px;
-        }
-
-        .empty-category-view p {
-          font-size: 0.875rem;
-          color: var(--text-muted);
-          margin-bottom: 18px;
-        }
-
-        /* Single Promotional Banner */
-        .category-promo-banner {
-          position: relative;
-          border-radius: var(--radius-lg);
+          width: 100%;
+          margin: 0;
+          border-radius: 0; /* Touches left and right edges, no rounded container restricting width */
           background-size: cover;
           background-position: center right;
           background-repeat: no-repeat;
-          padding: 22px 20px;
-          margin-bottom: 14px;
-          box-shadow: var(--shadow-sm);
-          overflow: hidden;
+          padding: 22px 0;
           min-height: 140px;
           display: flex;
           align-items: center;
+          box-shadow: var(--shadow-sm);
         }
 
         @media (min-width: 768px) {
-          .category-promo-banner {
-            padding: 30px 36px;
+          .category-promo-banner-full {
+            padding: 30px 0;
             min-height: 165px;
           }
+        }
+
+        .promo-content-wrap {
+          width: 100%;
         }
 
         .promo-banner-content {
@@ -389,6 +192,85 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
           transform: scale(0.96);
         }
 
+        .category-main-container {
+          padding-top: 16px;
+        }
+
+        .category-tabs-bar {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          margin-bottom: 14px;
+          scrollbar-width: none;
+        }
+
+        .category-tabs-bar::-webkit-scrollbar {
+          display: none;
+        }
+
+        .cat-tab-chip {
+          padding: 8px 18px;
+          border-radius: var(--radius-pill);
+          background: var(--surface-white);
+          border: 1.5px solid var(--border-color);
+          font-size: 0.875rem;
+          font-weight: 700;
+          color: var(--text-dark);
+          white-space: nowrap;
+          transition: all var(--transition-fast);
+        }
+
+        .cat-tab-chip:hover {
+          border-color: var(--primary-green);
+        }
+
+        .cat-tab-chip.active {
+          background-color: var(--primary-green);
+          color: #FFFFFF;
+          border-color: var(--primary-green);
+          box-shadow: 0 2px 8px rgba(0, 103, 56, 0.2);
+        }
+
+        .category-intro-section {
+          margin-bottom: 18px;
+        }
+
+        .cat-page-title {
+          font-size: 1.35rem;
+          font-weight: 800;
+          color: var(--charcoal);
+          line-height: 1.2;
+          margin-bottom: 4px;
+        }
+
+        .cat-page-desc {
+          font-size: 0.82rem;
+          color: var(--text-muted);
+          max-width: 680px;
+          line-height: 1.4;
+        }
+
+        .empty-category-view {
+          text-align: center;
+          padding: 60px 20px;
+          background: #FFFFFF;
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--border-color);
+        }
+
+        .empty-category-view h3 {
+          font-size: 1.25rem;
+          color: var(--text-dark);
+          margin-bottom: 6px;
+        }
+
+        .empty-category-view p {
+          font-size: 0.875rem;
+          color: var(--text-muted);
+          margin-bottom: 18px;
+        }
+
         /* Product Grid: 2-column on mobile, 3 on tablet, 4 on desktop */
         .products-grid {
           display: grid;
@@ -407,19 +289,6 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
           .products-grid {
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .controls-bar {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          .sort-dropdown-wrap {
-            width: 100%;
-          }
-          .sort-select {
-            width: 100%;
           }
         }
       `}</style>
