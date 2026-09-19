@@ -43,28 +43,27 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
   return (
     <div className="category-page animate-fade-in">
       <div className="app-container">
-        {/* Header Bar */}
-        <div className="category-header-wrap">
-          <button className="back-btn" onClick={() => navigate('/')}>
-            <ArrowLeft size={18} />
-            <span>Home</span>
-          </button>
-
-          <div className="category-hero-info">
-            <h1 className="cat-page-title">
-              {activeCategory === 'all'
-                ? 'All Fresh Cuts'
-                : currentCategoryInfo?.name || 'Fresh Meat & Seafood'}
-            </h1>
-            <p className="cat-page-desc">
-              {activeCategory === 'all'
-                ? 'Browse our complete catalog of farm-fresh poultry, tender mutton, and day-catch seafood.'
-                : currentCategoryInfo?.description}
-            </p>
+        {/* 1. PROMOTIONAL BANNER (Immediately below minimal header) */}
+        <div
+          className="category-promo-banner"
+          style={{
+            backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80')`
+          }}
+        >
+          <div className="promo-banner-content">
+            <span className="promo-banner-tag">WEEKEND SPECIAL</span>
+            <h2 className="promo-banner-title">Prime Cuts. Up to 21% Off.</h2>
+            <button
+              className="btn-promo-explore"
+              onClick={() => navigate('/offers')}
+            >
+              <span>Explore Offers</span>
+              <ArrowRight size={14} />
+            </button>
           </div>
         </div>
 
-        {/* CATEGORY TABS: All Cuts | Fresh Chicken | Prime Mutton | Seafood */}
+        {/* 2. HORIZONTAL SCROLLING CATEGORY NAMES */}
         <div className="category-tabs-bar">
           <button
             className={`cat-tab-chip ${activeCategory === 'all' ? 'active' : ''}`}
@@ -83,7 +82,21 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
           ))}
         </div>
 
-        {/* FILTER / SORT: All Types | Curry Cut | Boneless & Sort: Most Popular */}
+        {/* 3. "ALL FRESH CUTS" HEADING + SHORT DESCRIPTION */}
+        <div className="category-intro-section">
+          <h1 className="cat-page-title">
+            {activeCategory === 'all'
+              ? 'All Fresh Cuts'
+              : currentCategoryInfo?.name || 'Fresh Meat & Seafood'}
+          </h1>
+          <p className="cat-page-desc">
+            {activeCategory === 'all'
+              ? 'Browse our complete catalog of farm-fresh poultry, tender mutton, and day-catch seafood.'
+              : currentCategoryInfo?.description}
+          </p>
+        </div>
+
+        {/* 4. FILTER / SORT: All Types | Curry Cut | Boneless & Sort: Most Popular */}
         <div className="controls-bar">
           <div className="cut-type-filters">
             <button
@@ -121,27 +134,7 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
           </div>
         </div>
 
-        {/* SINGLE PROMOTIONAL BANNER */}
-        <div
-          className="category-promo-banner"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80')`
-          }}
-        >
-          <div className="promo-banner-content">
-            <span className="promo-banner-tag">WEEKEND SPECIAL</span>
-            <h2 className="promo-banner-title">Prime Cuts. Up to 21% Off.</h2>
-            <button
-              className="btn-promo-explore"
-              onClick={() => navigate('/offers')}
-            >
-              <span>Explore Offers</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* PRODUCT GRID */}
+        {/* 5. PRODUCT GRID */}
         {filteredProducts.length === 0 ? (
           <div className="empty-category-view">
             <h3>No products found</h3>
@@ -171,53 +164,35 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
 
       <style>{`
         .category-page {
-          padding-top: 18px;
+          padding-top: 14px;
           padding-bottom: 36px;
         }
 
-        .category-header-wrap {
-          margin-bottom: 20px;
-        }
-
-        .back-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: var(--primary-green);
-          margin-bottom: 12px;
-          padding: 6px 12px;
-          border-radius: var(--radius-pill);
-          background: var(--surface-light-green);
-          transition: var(--transition-fast);
-        }
-
-        .back-btn:hover {
-          background: #E1EDDC;
+        .category-intro-section {
+          margin-bottom: 14px;
         }
 
         .cat-page-title {
-          font-size: 1.8rem;
+          font-size: 1.35rem;
           font-weight: 800;
-          color: var(--primary-green);
+          color: var(--charcoal);
           line-height: 1.2;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
         }
 
         .cat-page-desc {
-          font-size: 0.9rem;
+          font-size: 0.82rem;
           color: var(--text-muted);
           max-width: 680px;
-          line-height: 1.45;
+          line-height: 1.4;
         }
 
         .category-tabs-bar {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           overflow-x: auto;
-          padding-bottom: 10px;
-          margin-bottom: 18px;
+          padding-bottom: 4px;
+          margin-bottom: 14px;
           scrollbar-width: none;
         }
 
@@ -346,7 +321,7 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
           background-position: center right;
           background-repeat: no-repeat;
           padding: 22px 20px;
-          margin-bottom: 22px;
+          margin-bottom: 14px;
           box-shadow: var(--shadow-sm);
           overflow: hidden;
           min-height: 140px;

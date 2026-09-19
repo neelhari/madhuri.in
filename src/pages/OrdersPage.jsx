@@ -62,10 +62,6 @@ export const OrdersPage = ({ navigate }) => {
     <div className="orders-page animate-fade-in">
       <div className="app-container">
         <div className="orders-header-row">
-          <button className="back-btn" onClick={() => navigate('/')}>
-            <ArrowLeft size={18} />
-            <span>Home</span>
-          </button>
           <h1 className="orders-title">My Orders ({orders.length})</h1>
         </div>
 

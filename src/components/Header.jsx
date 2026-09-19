@@ -3,7 +3,8 @@ import {
   Search,
   Heart,
   User,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { useWishlist } from '../context/WishlistContext';
@@ -21,11 +22,71 @@ export const Header = ({ currentRoute, navigate }) => {
     }
   };
 
-  const isSearchVisible =
-    currentRoute === '/' ||
-    currentRoute === '' ||
-    currentRoute.startsWith('/categories');
+  const isHomePage = currentRoute === '/' || currentRoute === '';
 
+  // ALL OTHER PAGES: Minimal Empty Header with ONLY the back icon (←)
+  if (!isHomePage) {
+    return (
+      <header className="site-header site-header-minimal">
+        <div className="app-container minimal-header-inner">
+          <button
+            className="header-back-btn"
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                navigate('/');
+              }
+            }}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={22} strokeWidth={2.2} />
+          </button>
+        </div>
+
+        <style>{`
+          .site-header-minimal {
+            position: relative;
+            background-color: var(--surface-white);
+            border-bottom: 1px solid var(--border-color);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            z-index: 100;
+          }
+
+          .minimal-header-inner {
+            display: flex;
+            align-items: center;
+            width: 100%;
+          }
+
+          .header-back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: var(--charcoal);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: background var(--transition-fast), color var(--transition-fast);
+            padding: 0;
+            margin-left: -6px;
+          }
+
+          .header-back-btn:hover {
+            background: var(--surface-soft);
+            color: var(--deep-forest-green);
+          }
+        `}</style>
+      </header>
+    );
+  }
+
+  // HOMEPAGE: Full Branded Header
   return (
     <header className="site-header">
       {/* Main Header Bar - Scrolls naturally with page, NOT sticky */}
@@ -115,10 +176,9 @@ export const Header = ({ currentRoute, navigate }) => {
         </div>
       </div>
 
-      {/* MOBILE-ONLY: Clean Search Bar Below Header - On Homepage and Category pages */}
-      {isSearchVisible && (
-        <div className="mobile-search-section mobile-only">
-          <div className="app-container">
+      {/* MOBILE-ONLY: Clean Search Bar Below Header - On Homepage */}
+      <div className="mobile-search-section mobile-only">
+        <div className="app-container">
             <form className="clean-search-bar" onSubmit={handleSearchSubmit}>
               <Search size={16} className="clean-search-icon" />
               <input
@@ -143,7 +203,6 @@ export const Header = ({ currentRoute, navigate }) => {
             </form>
           </div>
         </div>
-      )}
 
       <style>{`
         .site-header {

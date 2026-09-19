@@ -65,14 +65,6 @@ export const SearchPage = ({ initialQuery = '', navigate }) => {
   return (
     <div className="search-page animate-fade-in">
       <div className="app-container">
-        {/* Top Header & Search Input */}
-        <div className="search-header-row">
-          <button className="back-btn" onClick={() => navigate('/')}>
-            <ArrowLeft size={18} />
-            <span>Home</span>
-          </button>
-        </div>
-
         <form onSubmit={handleSearchSubmit} className="search-input-form">
           <Search size={20} className="search-icon" />
           <input

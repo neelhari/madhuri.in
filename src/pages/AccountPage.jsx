@@ -34,12 +34,6 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
   return (
     <div className="account-page animate-fade-in">
       <div className="app-container">
-        {/* Header */}
-        <button className="back-btn" onClick={() => navigate('/')}>
-          <ArrowLeft size={18} />
-          <span>Home</span>
-        </button>
-
         <h1 className="account-page-title">My Account</h1>
 
         <div className="account-layout-grid">

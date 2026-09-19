@@ -56,15 +56,6 @@ export const ProductDetailPage = ({ slug, navigate }) => {
   return (
     <div className="product-detail-page animate-fade-in">
       <div className="app-container">
-        {/* Back navigation */}
-        <button
-          className="back-btn"
-          onClick={() => navigate('/categories')}
-        >
-          <ArrowLeft size={18} />
-          <span>Back to Products</span>
-        </button>
-
         <div className="pdp-layout-grid">
           {/* Left: Image Gallery */}
           <div className="pdp-gallery-col">

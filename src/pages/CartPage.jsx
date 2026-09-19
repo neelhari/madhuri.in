@@ -124,12 +124,8 @@ export const CartPage = ({ navigate }) => {
   return (
     <div className="cart-page animate-fade-in">
       <div className="app-container">
-        {/* Header */}
-        <div className="cart-header-row">
-          <button className="back-btn" onClick={() => navigate('/')}>
-            <ArrowLeft size={18} />
-            <span>Continue Shopping</span>
-          </button>
+        {/* Header Actions */}
+        <div className="cart-header-row" style={{ justifyContent: 'flex-end' }}>
           <button className="clear-cart-btn" onClick={clearCart}>
             Clear Cart
           </button>

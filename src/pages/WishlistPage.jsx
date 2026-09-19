@@ -81,10 +81,6 @@ export const WishlistPage = ({ navigate }) => {
     <div className="wishlist-page animate-fade-in">
       <div className="app-container">
         <div className="wishlist-header-row">
-          <button className="back-btn" onClick={() => navigate('/')}>
-            <ArrowLeft size={18} />
-            <span>Home</span>
-          </button>
           <h1 className="wishlist-title">My Wishlist ({wishlistedProducts.length})</h1>
         </div>
 

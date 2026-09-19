@@ -32,12 +32,6 @@ export const OffersPage = ({ navigate }) => {
   return (
     <div className="offers-page animate-fade-in">
       <div className="app-container">
-        {/* Header */}
-        <button className="back-btn" onClick={() => navigate('/')}>
-          <ArrowLeft size={18} />
-          <span>Home</span>
-        </button>
-
         <div className="offers-hero-card">
           <div className="offers-hero-badge">
             <Percent size={14} />

@@ -111,12 +111,6 @@ export const CheckoutPage = ({ navigate }) => {
   return (
     <div className="checkout-page animate-fade-in">
       <div className="app-container">
-        {/* Top Back Nav */}
-        <button className="back-btn" onClick={() => navigate('/cart')}>
-          <ArrowLeft size={18} />
-          <span>Back to Cart</span>
-        </button>
-
         <h1 className="checkout-title">Secure Checkout</h1>
 
         {/* Checkout Stepper Progress */}
