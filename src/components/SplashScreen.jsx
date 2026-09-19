@@ -17,14 +17,14 @@ export const SplashScreen = ({ onComplete }) => {
     document.body.style.touchAction = 'none';
     window.scrollTo(0, 0);
 
-    // 2. Play video
+    // 2. Play video immediately
     if (videoRef.current) {
       videoRef.current.play().catch((err) => {
         console.log('Video autoplay note:', err);
       });
     }
 
-    // 3. Fallback safety timer (animation is ~4s, fallback at 8s in case browser halts playback)
+    // 3. Fallback safety timer
     timerRef.current = setTimeout(() => {
       handleComplete();
     }, 8000);
@@ -46,7 +46,7 @@ export const SplashScreen = ({ onComplete }) => {
   };
 
   const handleVideoEnded = () => {
-    // Hold final revealed frame briefly then smoothly fade
+    // Hold final revealed frame briefly, then fade out smoothly
     setTimeout(() => {
       handleComplete();
     }, 200);
@@ -62,7 +62,6 @@ export const SplashScreen = ({ onComplete }) => {
         <video
           ref={videoRef}
           src="/splash-video.mp4"
-          poster="/splash-poster.png"
           autoPlay
           muted
           playsInline
@@ -87,7 +86,7 @@ export const SplashScreen = ({ onComplete }) => {
           min-height: 100vh !important;
           min-height: 100dvh !important;
           min-height: -webkit-fill-available !important;
-          background-color: #FFDE59 !important;
+          background-color: #F0E2CD !important;
           z-index: 99999999 !important;
           display: flex !important;
           align-items: center !important;
@@ -118,23 +117,28 @@ export const SplashScreen = ({ onComplete }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #FFDE59;
+          background-color: #F0E2CD;
           overflow: hidden;
         }
 
         .splash-video-element {
           width: 100%;
           height: 100%;
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain !important;
-          background-color: #FFDE59;
+          object-fit: cover !important;
+          background-color: #F0E2CD;
           display: block;
+        }
+
+        @media (min-width: 1024px) {
+          .splash-video-element {
+            object-fit: contain !important;
+            max-width: 540px;
+            max-height: 960px;
+          }
         }
       `}</style>
     </div>
   );
 
-  // Use Portal directly to document.body so no parent container can restrict or offset it
   return ReactDOM.createPortal(splashContent, document.body);
 };
