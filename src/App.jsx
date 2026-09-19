@@ -12,6 +12,7 @@ import { Footer } from './components/Footer';
 import { WholesaleModal } from './components/WholesaleModal';
 import { LocationModal } from './components/LocationModal';
 import { ToastContainer } from './components/Toast';
+import { SplashScreen } from './components/SplashScreen';
 
 import { HomePage } from './pages/HomePage';
 import { CategoryPage } from './pages/CategoryPage';
@@ -26,6 +27,7 @@ import { SearchPage } from './pages/SearchPage';
 import { OffersPage } from './pages/OffersPage';
 
 export const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname || '/');
   const [searchParams, setSearchParams] = useState(() => new URLSearchParams(window.location.search));
   const [isWholesaleOpen, setIsWholesaleOpen] = useState(false);
@@ -142,6 +144,11 @@ export const App = () => {
           <OrderProvider>
             <ToastProvider>
               <div className="madurfresh-app-root">
+                {/* Brand Splash Screen Animation */}
+                {showSplash && (
+                  <SplashScreen onComplete={() => setShowSplash(false)} />
+                )}
+
                 {/* Global Header */}
                 <Header
                   currentRoute={currentPath}
