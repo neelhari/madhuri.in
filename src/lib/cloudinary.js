@@ -1,4 +1,4 @@
-// Cloudinary Upload Utility for Images & Videos
+// Cloudinary Upload & Automatic Compression Utility for Images & Videos
 
 export const CLOUDINARY_CONFIG = {
   cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'zoizrivw',
@@ -18,12 +18,32 @@ async function generateSha1(str) {
 }
 
 /**
- * Uploads a File or Base64 data to Cloudinary
+ * Inserts Cloudinary auto-compression and next-gen format conversion into image URLs.
+ * Converts heavy 5MB-10MB phone uploads into ~50KB-100KB lightning-fast WebP/AVIF images.
+ * 
+ * @param {string} rawUrl - The original secure_url from Cloudinary
+ * @param {number} maxWidth - Max width (default 1000px)
+ * @returns {string} Fully optimized and compressed image URL
+ */
+export function getOptimizedCloudinaryUrl(rawUrl, maxWidth = 1000) {
+  if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+  if (!rawUrl.includes('cloudinary.com')) return rawUrl;
+  if (rawUrl.includes('/q_auto,f_auto')) return rawUrl; // already transformed
+
+  // Insert transformation after "/upload/"
+  return rawUrl.replace(
+    '/upload/',
+    `/upload/q_auto,f_auto,w_${maxWidth},c_limit/`
+  );
+}
+
+/**
+ * Uploads a File or Base64 data to Cloudinary with automatic optimization
  * Supports images (.jpg, .png, .webp) and videos (.mp4, etc.)
  * 
  * @param {File|Blob|string} fileOrDataUrl - The file to upload
- * @param {Object} options - { folder: 'madhurfresh/products', resourceType: 'auto' | 'image' | 'video' }
- * @returns {Promise<{ url: string, publicId: string, resourceType: string, format: string }>}
+ * @param {Object} options - { folder: 'madhurfresh/products', resourceType: 'auto' | 'image' | 'video', maxWidth: 1000 }
+ * @returns {Promise<{ url: string, rawUrl: string, publicId: string, resourceType: string, format: string }>}
  */
 export async function uploadToCloudinary(fileOrDataUrl, options = {}) {
   const cloudName = CLOUDINARY_CONFIG.cloudName;
@@ -32,6 +52,7 @@ export async function uploadToCloudinary(fileOrDataUrl, options = {}) {
 
   const folder = options.folder || 'madhurfresh';
   const resourceType = options.resourceType || 'auto';
+  const maxWidth = options.maxWidth || 1000;
   const timestamp = Math.round(new Date().getTime() / 1000);
 
   // Parameter string for signature: folder=...&timestamp=...<apiSecret>
@@ -59,8 +80,17 @@ export async function uploadToCloudinary(fileOrDataUrl, options = {}) {
     }
 
     const result = await response.json();
+    const rawSecureUrl = result.secure_url || result.url;
+    const isImage = result.resource_type === 'image';
+    
+    // Automatically apply Cloudinary's AI compression & WebP format optimization for images
+    const optimizedUrl = isImage
+      ? getOptimizedCloudinaryUrl(rawSecureUrl, maxWidth)
+      : rawSecureUrl;
+
     return {
-      url: result.secure_url || result.url,
+      url: optimizedUrl,
+      rawUrl: rawSecureUrl,
       publicId: result.public_id,
       resourceType: result.resource_type,
       format: result.format,
