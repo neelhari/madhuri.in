@@ -100,6 +100,17 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
             </div>
 
             <div className="menu-divider" />
+            <div className="menu-group-title">Store Administration</div>
+
+            <div className="menu-item admin-portal-btn" onClick={() => navigate('/admin')}>
+              <div className="menu-item-left">
+                <ShieldCheck size={20} color="#075437" />
+                <span><strong>Store Admin Dashboard</strong></span>
+              </div>
+              <span className="badge badge-admin">Manage Store</span>
+            </div>
+
+            <div className="menu-divider" />
             <div className="menu-group-title">Business & Support</div>
 
             <div className="menu-item" onClick={onOpenWholesale}>
@@ -334,12 +345,26 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
           gap: 8px;
         }
 
-        .menu-badge {
-          background: var(--primary-green);
-          color: #FFFFFF;
+        .badge-admin {
+          background: #EFF8F4;
+          color: #075437;
+          border: 1px solid #075437;
           font-size: 0.7rem;
           font-weight: 800;
-          padding: 1px 7px;
+          padding: 2px 8px;
+          border-radius: var(--radius-pill);
+        }
+
+        .admin-portal-btn:hover {
+          background: #EFF8F4;
+        }
+
+        .badge-yellow {
+          background: #FEF3C7;
+          color: #92400E;
+          font-size: 0.7rem;
+          font-weight: 800;
+          padding: 2px 8px;
           border-radius: var(--radius-pill);
         }
 

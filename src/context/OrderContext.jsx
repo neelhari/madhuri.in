@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase, SupabaseDB } from '../lib/supabaseClient';
 
 const OrderContext = createContext();
 
 const INITIAL_DEMO_ORDERS = [
   {
     id: 'MF-89241',
-    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(), // 35 mins ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
     status: 'Out for Delivery',
-    statusCode: 4, // 1: Placed, 2: Confirmed, 3: Preparing, 4: Out for Delivery, 5: Delivered
+    statusCode: 4,
     estimatedDelivery: 'In 25 minutes',
     address: {
       name: 'Sindhusha G',
@@ -59,6 +60,21 @@ export const OrderProvider = ({ children }) => {
 
   const [currentOrder, setCurrentOrder] = useState(null);
 
+  // Sync from Supabase on mount
+  useEffect(() => {
+    async function loadRemoteOrders() {
+      try {
+        const remote = await SupabaseDB.fetchTable('orders', orders);
+        if (remote && remote.length > 0) {
+          setOrders(remote);
+        }
+      } catch (e) {
+        console.warn('Orders Supabase sync skipped:', e);
+      }
+    }
+    loadRemoteOrders();
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('madurfresh_orders', JSON.stringify(orders));
@@ -84,7 +100,32 @@ export const OrderProvider = ({ children }) => {
 
     setOrders(prev => [newOrder, ...prev]);
     setCurrentOrder(newOrder);
+    SupabaseDB.upsertRecord('orders', newOrder);
     return newOrder;
+  };
+
+  const updateOrderStatus = (orderId, newStatus, newStatusCode) => {
+    setOrders(prev => {
+      const updated = prev.map(order => {
+        if (order.id === orderId) {
+          return {
+            ...order,
+            status: newStatus,
+            statusCode: newStatusCode !== undefined ? newStatusCode : order.statusCode
+          };
+        }
+        return order;
+      });
+
+      const target = updated.find(o => o.id === orderId);
+      if (target) SupabaseDB.upsertRecord('orders', target);
+      return updated;
+    });
+  };
+
+  const deleteOrder = (orderId) => {
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    SupabaseDB.deleteRecord('orders', 'id', orderId);
   };
 
   const getOrderById = (id) => orders.find(o => o.id === id);
@@ -95,7 +136,9 @@ export const OrderProvider = ({ children }) => {
         orders,
         currentOrder,
         placeOrder,
-        getOrderById
+        getOrderById,
+        updateOrderStatus,
+        deleteOrder
       }}
     >
       {children}

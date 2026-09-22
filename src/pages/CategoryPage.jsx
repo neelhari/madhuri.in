@@ -1,15 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { PRODUCTS, CATEGORIES } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 
 export const CategoryPage = ({ categoryId = 'all', navigate }) => {
+  const { products, categories, categoryBanners } = useStoreData();
   const [activeCategory, setActiveCategory] = useState(categoryId || 'all');
 
+  const CATEGORIES = categories || [];
   const currentCategoryInfo = CATEGORIES.find((c) => c.id === activeCategory);
 
+  // Matched category banner if available
+  const matchedBanner = (categoryBanners || []).find(
+    (cb) => cb.categoryId === activeCategory
+  );
+
+  const bannerBg = matchedBanner?.bannerImage || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80';
+  const bannerTagline = matchedBanner?.tagline || 'Prime Cuts. Daily farm sourced.';
+  const bannerPromo = matchedBanner?.promoText || 'Fresh butchery • Vacuum sealed';
+
   const filteredProducts = useMemo(() => {
-    let list = [...PRODUCTS];
+    let list = [...(products || [])];
 
     // Category filter
     if (activeCategory !== 'all') {
@@ -17,31 +28,29 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
     }
 
     // Default sort by popular
-    list.sort((a, b) => b.rating * b.reviewCount - a.rating * a.reviewCount);
+    list.sort((a, b) => (b.rating || 0) * (b.reviewCount || 0) - (a.rating || 0) * (a.reviewCount || 0));
 
     return list;
-  }, [activeCategory]);
+  }, [activeCategory, products]);
 
   return (
     <div className="category-page animate-fade-in">
-      {/* 1. FULL-WIDTH PROMOTIONAL BANNER (Starts immediately below header, touches left & right edges, zero gap) */}
+      {/* 1. FULL-WIDTH PROMOTIONAL BANNER */}
       <div
         className="category-promo-banner-full"
         style={{
-          backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80')`
+          backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('${bannerBg}')`
         }}
       >
         <div className="app-container promo-content-wrap">
           <div className="promo-banner-content">
-            <span className="promo-banner-tag">WEEKEND SPECIAL</span>
-            <h2 className="promo-banner-title">Prime Cuts. Up to 21% Off.</h2>
-            <button
-              className="btn-promo-explore"
-              onClick={() => navigate('/offers')}
-            >
-              <span>Explore Offers</span>
-              <ArrowRight size={14} />
-            </button>
+            <span className="promo-banner-tag">{bannerPromo}</span>
+            <h2 className="promo-banner-title">
+              {currentCategoryInfo ? currentCategoryInfo.name : 'All Prime Cuts'}
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginBottom: '10px' }}>
+              {bannerTagline}
+            </p>
           </div>
         </div>
       </div>

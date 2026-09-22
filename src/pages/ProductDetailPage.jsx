@@ -13,15 +13,19 @@ import {
   CheckCircle2,
   ChefHat
 } from 'lucide-react';
-import { PRODUCTS } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useLocation } from '../context/LocationContext';
 import { useToast } from '../context/ToastContext';
+import { useStoreData } from '../context/StoreDataContext';
 import { ProductCard } from '../components/ProductCard';
 
 export const ProductDetailPage = ({ slug, navigate }) => {
-  const product = PRODUCTS.find((p) => p.slug === slug) || PRODUCTS[0];
+  const { products } = useStoreData();
+  const product = (products || []).find((p) => p.slug === slug || p.id === slug) || products?.[0] || {
+    name: 'Fresh Meat Cut',
+    weights: []
+  };
   const { addToCart, updateQuantity, getItemQuantity } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { currentLocation, setIsLocationModalOpen } = useLocation();

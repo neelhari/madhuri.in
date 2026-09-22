@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { HERO_BANNERS } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 
 export const HeroCarousel = ({ navigate }) => {
+  const { heroBanners } = useStoreData();
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const banners = heroBanners && heroBanners.length > 0 ? heroBanners : [
+    {
+      id: 1,
+      title: 'Farm Fresh Chicken',
+      category: 'chicken',
+      image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=1200&q=80'
+    }
+  ];
+
   useEffect(() => {
+    if (banners.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % HERO_BANNERS.length);
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
-  const currentBanner = HERO_BANNERS[currentIndex];
+  const currentBanner = banners[currentIndex % banners.length];
 
   return (
     <div className="hero-carousel-container">
@@ -40,10 +51,10 @@ export const HeroCarousel = ({ navigate }) => {
 
           {/* Subtle Carousel Indicators */}
           <div className="carousel-indicators">
-            {HERO_BANNERS.map((banner, index) => (
+            {banners.map((banner, index) => (
               <button
-                key={banner.id}
-                className={`indicator-dot ${index === currentIndex ? 'active' : ''}`}
+                key={banner.id || index}
+                className={`indicator-dot ${index === (currentIndex % banners.length) ? 'active' : ''}`}
                 onClick={() => setCurrentIndex(index)}
                 aria-label={`Slide ${index + 1}`}
               />

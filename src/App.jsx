@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { AuthProvider } from './context/AuthContext';
+import { StoreDataProvider } from './context/StoreDataContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { LocationProvider } from './context/LocationContext';
@@ -25,6 +27,7 @@ import { WishlistPage } from './pages/WishlistPage';
 import { AccountPage } from './pages/AccountPage';
 import { SearchPage } from './pages/SearchPage';
 import { OffersPage } from './pages/OffersPage';
+import { AdminPage } from './pages/AdminPage';
 
 export const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -50,7 +53,24 @@ export const App = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const isAdminRoute = currentPath.startsWith('/admin');
+
   const renderCurrentPage = () => {
+    // 0. Admin Panel Route
+    if (isAdminRoute) {
+      let initialTab = 'products';
+      if (currentPath === '/admin/banners') initialTab = 'banners';
+      else if (currentPath === '/admin/categories') initialTab = 'categories';
+      else if (currentPath === '/admin/products') initialTab = 'products';
+      else if (currentPath === '/admin/inventory') initialTab = 'inventory';
+      else if (currentPath === '/admin/orders') initialTab = 'orders';
+      else if (currentPath === '/admin/customers') initialTab = 'customers';
+      else if (currentPath === '/admin/coupons') initialTab = 'coupons';
+      else if (currentPath === '/admin/settings') initialTab = 'settings';
+
+      return <AdminPage navigate={navigate} initialTab={initialTab} />;
+    }
+
     // 1. Homepage
     if (currentPath === '/' || currentPath === '') {
       return (
@@ -138,64 +158,76 @@ export const App = () => {
   };
 
   return (
-    <LocationProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <OrderProvider>
-            <ToastProvider>
-              <div className="madurfresh-app-root">
-                {/* Brand Splash Screen Animation */}
-                {showSplash && (
-                  <SplashScreen onComplete={() => setShowSplash(false)} />
-                )}
+    <AuthProvider>
+      <StoreDataProvider>
+        <LocationProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <OrderProvider>
+                <ToastProvider>
+                  <div className="madurfresh-app-root">
+                    {/* Brand Splash Screen Animation (Only on initial consumer storefront visit) */}
+                    {showSplash && !isAdminRoute && (
+                      <SplashScreen onComplete={() => setShowSplash(false)} />
+                    )}
 
-                {/* Global Header */}
-                <Header
-                  currentRoute={currentPath}
-                  navigate={navigate}
-                  onOpenWholesale={() => setIsWholesaleOpen(true)}
-                />
+                    {/* Public Storefront Header (Hidden on Admin) */}
+                    {!isAdminRoute && (
+                      <Header
+                        currentRoute={currentPath}
+                        navigate={navigate}
+                        onOpenWholesale={() => setIsWholesaleOpen(true)}
+                      />
+                    )}
 
-                {/* Main Content Body */}
-                <main className="main-content-wrapper">
-                  {renderCurrentPage()}
-                </main>
+                    {/* Main Content Body */}
+                    <main className={isAdminRoute ? 'admin-root-wrapper' : 'main-content-wrapper'}>
+                      {renderCurrentPage()}
+                    </main>
 
-                {/* Floating Cart Bar (App-like for Mobile and Desktop) */}
-                <FloatingCartBar
-                  currentRoute={currentPath}
-                  navigate={navigate}
-                />
+                    {/* Floating Cart Bar (Hidden on Admin) */}
+                    {!isAdminRoute && (
+                      <FloatingCartBar
+                        currentRoute={currentPath}
+                        navigate={navigate}
+                      />
+                    )}
 
-                {/* Global Footer */}
-                <Footer
-                  navigate={navigate}
-                  onOpenWholesale={() => setIsWholesaleOpen(true)}
-                />
+                    {/* Global Footer (Hidden on Admin) */}
+                    {!isAdminRoute && (
+                      <Footer
+                        navigate={navigate}
+                        onOpenWholesale={() => setIsWholesaleOpen(true)}
+                      />
+                    )}
 
-                {/* Mobile Bottom Navigation */}
-                <BottomNavigation
-                  currentRoute={currentPath}
-                  navigate={navigate}
-                />
+                    {/* Mobile Bottom Navigation (Hidden on Admin) */}
+                    {!isAdminRoute && (
+                      <BottomNavigation
+                        currentRoute={currentPath}
+                        navigate={navigate}
+                      />
+                    )}
 
-                {/* Wholesale Modal */}
-                <WholesaleModal
-                  isOpen={isWholesaleOpen}
-                  onClose={() => setIsWholesaleOpen(false)}
-                />
+                    {/* Wholesale Modal */}
+                    <WholesaleModal
+                      isOpen={isWholesaleOpen}
+                      onClose={() => setIsWholesaleOpen(false)}
+                    />
 
-                {/* Location Selector Modal */}
-                <LocationModal />
+                    {/* Location Selector Modal */}
+                    <LocationModal />
 
-                {/* Toast Notification Container */}
-                <ToastContainer />
-              </div>
-            </ToastProvider>
-          </OrderProvider>
-        </WishlistProvider>
-      </CartProvider>
-    </LocationProvider>
+                    {/* Toast Notification Container */}
+                    <ToastContainer />
+                  </div>
+                </ToastProvider>
+              </OrderProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </LocationProvider>
+      </StoreDataProvider>
+    </AuthProvider>
   );
 };
 

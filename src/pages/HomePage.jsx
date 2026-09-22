@@ -10,45 +10,44 @@ import { HeroCarousel } from '../components/HeroCarousel';
 import { CategoryCard } from '../components/CategoryCard';
 import { ProductCard } from '../components/ProductCard';
 import { WhyMadurFreshCarousel } from '../components/WhyMadurFreshCarousel';
-import {
-  CATEGORIES,
-  PRODUCTS,
-  TESTIMONIALS
-} from '../data/products';
+import { TESTIMONIALS } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 
 export const HomePage = ({ navigate, onOpenWholesale }) => {
+  const { categories, products } = useStoreData();
+  const CATEGORIES = categories || [];
+  const PRODUCTS = products || [];
+
   // State for the card highlight & blur effect
   const [activeHighlightIndex, setActiveHighlightIndex] = useState(0);
 
-  const highlightCards = [
-    {
-      id: 1,
-      title: 'Prime Goat Mutton',
-      subtitle: 'Pasture-raised & tender',
-      price: '₹490',
-      tag: 'Chef Choice',
-      image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80',
-      category: 'mutton'
-    },
-    {
-      id: 2,
-      title: 'Farm Fresh Chicken',
-      subtitle: '100% Antibiotic-free',
-      price: '₹175',
-      tag: 'Bestseller',
-      image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=600&q=80',
-      category: 'chicken'
-    },
-    {
-      id: 3,
-      title: 'Coastal White Prawns',
-      subtitle: '100% Cleaned & deveined',
-      price: '₹260',
-      tag: 'Day Catch',
-      image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?auto=format&fit=crop&w=600&q=80',
-      category: 'seafood'
-    }
-  ];
+  const highlightCards = PRODUCTS.map((p, idx) => {
+    const minPrice =
+      p.weights && p.weights.length > 0
+        ? Math.min(...p.weights.map((w) => w.price || 0))
+        : 175;
+    const defaultTag =
+      idx === 0
+        ? 'Chef Choice'
+        : idx === 1
+        ? 'Bestseller'
+        : idx === 2
+        ? 'Day Catch'
+        : 'Special Cut';
+
+    return {
+      id: p.id,
+      slug: p.slug,
+      title: p.name,
+      subtitle: p.shortDescription || '100% Antibiotic-free & fresh',
+      price: `₹${minPrice}`,
+      tag: p.tag || defaultTag,
+      image:
+        (p.images && p.images[0]) ||
+        'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=600&q=80',
+      category: p.category
+    };
+  });
 
   const getIcon = (name) => {
     switch (name) {
@@ -90,75 +89,83 @@ export const HomePage = ({ navigate, onOpenWholesale }) => {
           </div>
         </section>
 
-        {/* 3. LIGHT YELLOW SECTION (Clean without floating artwork, all cards active) */}
-        <section className="highlight-blur-section">
-          <div className="highlight-section-content">
-            <div className="highlight-header">
-              <div>
-                <span className="highlight-badge">FEATURED ARTISANAL SELECTION</span>
-                <h3 className="highlight-title">Crafted for Exceptional Taste</h3>
-              </div>
-              <div className="carousel-arrows-mini">
-                <button
-                  className="arrow-mini"
-                  onClick={() =>
-                    setActiveHighlightIndex((prev) =>
-                      prev === 0 ? highlightCards.length - 1 : prev - 1
-                    )
-                  }
-                  aria-label="Previous"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  className="arrow-mini"
-                  onClick={() =>
-                    setActiveHighlightIndex((prev) => (prev + 1) % highlightCards.length)
-                  }
-                  aria-label="Next"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Cards Track: All cards active and crisp without blur */}
-            <div className="highlight-cards-track">
-              {highlightCards.map((card, idx) => {
-                const isFocused = idx === activeHighlightIndex;
-                return (
-                  <div
-                    key={card.id}
-                    className={`focus-card ${isFocused ? 'card-focused' : ''}`}
-                    onClick={() => setActiveHighlightIndex(idx)}
+        {/* 3. LIGHT YELLOW SECTION - Dynamically powered by real live products */}
+        {highlightCards.length > 0 && (
+          <section className="highlight-blur-section">
+            <div className="highlight-section-content">
+              <div className="highlight-header">
+                <div>
+                  <span className="highlight-badge">FEATURED ARTISANAL SELECTION</span>
+                  <h3 className="highlight-title">Crafted for Exceptional Taste</h3>
+                </div>
+                <div className="carousel-arrows-mini">
+                  <button
+                    className="arrow-mini"
+                    onClick={() =>
+                      setActiveHighlightIndex((prev) =>
+                        prev === 0 ? highlightCards.length - 1 : prev - 1
+                      )
+                    }
+                    aria-label="Previous"
                   >
-                    <div className="focus-card-media">
-                      <img src={card.image} alt={card.title} />
-                      <span className="focus-card-tag">{card.tag}</span>
-                    </div>
-                    <div className="focus-card-body">
-                      <h4 className="focus-card-title">{card.title}</h4>
-                      <p className="focus-card-sub">{card.subtitle}</p>
-                      <div className="focus-card-footer">
-                        <span className="focus-card-price">From {card.price}</span>
-                        <button
-                          className="focus-card-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/categories/${card.category}`);
-                          }}
-                        >
-                          <span>Explore</span>
-                          <ArrowRight size={12} />
-                        </button>
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    className="arrow-mini"
+                    onClick={() =>
+                      setActiveHighlightIndex(
+                        (prev) => (prev + 1) % highlightCards.length
+                      )
+                    }
+                    aria-label="Next"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Cards Track: Dynamically loaded from real products */}
+              <div className="highlight-cards-track">
+                {highlightCards.map((card, idx) => {
+                  const isFocused = idx === activeHighlightIndex;
+                  return (
+                    <div
+                      key={card.id}
+                      className={`focus-card ${isFocused ? 'card-focused' : ''}`}
+                      onClick={() => {
+                        setActiveHighlightIndex(idx);
+                        navigate(`/product/${card.slug || card.id}`);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="focus-card-media">
+                        <img src={card.image} alt={card.title} />
+                        <span className="focus-card-tag">{card.tag}</span>
+                      </div>
+                      <div className="focus-card-body">
+                        <h4 className="focus-card-title">{card.title}</h4>
+                        <p className="focus-card-sub">{card.subtitle}</p>
+                        <div className="focus-card-footer">
+                          <span className="focus-card-price">From {card.price}</span>
+                          <button
+                            className="focus-card-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/product/${card.slug || card.id}`);
+                            }}
+                          >
+                            <span>Explore</span>
+                            <ArrowRight size={12} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 4. Popular Cuts (2-col on mobile, 4-col on desktop) */}
         <section className="section popular-picks-section">
