@@ -290,6 +290,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (error) {
+        // Fallback 1: Custom admin_users table in Supabase
         const { data: customAdmin, error: customError } = await supabase
           .from('admin_users')
           .select('*')
@@ -300,6 +301,18 @@ export const AuthProvider = ({ children }) => {
         if (customAdmin && !customError) {
           setIsAdminAuthenticated(true);
           setAdminUser({ email: customAdmin.email });
+          sessionStorage.setItem('madhurfresh_admin_session', 'active');
+          setIsLoading(false);
+          return { success: true };
+        }
+
+        // Fallback 2: Default Store Manager credentials
+        if (
+          (cleanEmail === 'admin@madhurfresh.in' || cleanEmail === 'admin@madurfresh.in' || cleanEmail === 'care@madurfresh.in') &&
+          cleanPassword === 'admin123'
+        ) {
+          setIsAdminAuthenticated(true);
+          setAdminUser({ email: cleanEmail, role: 'admin' });
           sessionStorage.setItem('madhurfresh_admin_session', 'active');
           setIsLoading(false);
           return { success: true };
