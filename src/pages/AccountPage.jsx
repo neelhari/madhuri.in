@@ -9,20 +9,26 @@ import {
   FileText,
   ShieldCheck,
   LogOut,
+  LogIn,
   ChevronRight,
   Phone,
   MessageSquare,
-  ArrowLeft
+  ArrowLeft,
+  UserPlus
 } from 'lucide-react';
 import { BRAND_INFO } from '../data/products';
 import { useLocation } from '../context/LocationContext';
 import { useOrders } from '../context/OrderContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export const AccountPage = ({ navigate, onOpenWholesale }) => {
   const { currentLocation, setIsLocationModalOpen } = useLocation();
   const { orders } = useOrders();
   const { wishlistCount } = useWishlist();
+  const { currentUser, isUserAuthenticated, logoutUser } = useAuth();
+  const { showToast } = useToast();
 
   const handleSupportWhatsApp = () => {
     window.open(
@@ -31,24 +37,64 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
     );
   };
 
+  const handleLogout = async () => {
+    await logoutUser();
+    showToast('You have been logged out successfully.', 'info');
+    navigate('/');
+  };
+
   return (
     <div className="account-page animate-fade-in">
       <div className="app-container">
         <h1 className="account-page-title">My Account</h1>
 
         <div className="account-layout-grid">
-          {/* User Profile Card */}
-          <div className="profile-card">
-            <div className="profile-avatar-wrap">
-              <User size={34} color="var(--primary-green)" />
+          {/* USER PROFILE OR SIGN-IN CALLOUT */}
+          {isUserAuthenticated && currentUser ? (
+            <div className="profile-card">
+              <div className="profile-avatar-wrap">
+                <span className="profile-avatar-letter">
+                  {(currentUser.name || currentUser.email || 'U')[0].toUpperCase()}
+                </span>
+              </div>
+              <div className="profile-info">
+                <h3 className="profile-name">{currentUser.name || 'MadurFresh Customer'}</h3>
+                {currentUser.phone && <span className="profile-phone">{currentUser.phone}</span>}
+                <span className="profile-email">{currentUser.email}</span>
+              </div>
+              <span className="membership-badge">Verified Member</span>
             </div>
-            <div className="profile-info">
-              <h3 className="profile-name">{BRAND_INFO.owner}</h3>
-              <span className="profile-phone">{BRAND_INFO.phone}</span>
-              <span className="profile-email">{BRAND_INFO.email}</span>
+          ) : (
+            <div className="guest-login-banner">
+              <div className="guest-login-content">
+                <div className="guest-avatar-icon">
+                  <User size={30} color="var(--primary-green)" />
+                </div>
+                <div className="guest-text">
+                  <h3>Sign In or Create Account</h3>
+                  <p>Log in to view past orders, track deliveries, and save addresses.</p>
+                </div>
+              </div>
+              <div className="guest-actions">
+                <button
+                  type="button"
+                  className="btn-guest-login"
+                  onClick={() => navigate('/login')}
+                >
+                  <LogIn size={16} />
+                  <span>Sign In</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-guest-register"
+                  onClick={() => navigate('/login?mode=register')}
+                >
+                  <UserPlus size={16} />
+                  <span>Create Account</span>
+                </button>
+              </div>
             </div>
-            <span className="membership-badge">MadurFresh Member</span>
-          </div>
+          )}
 
           {/* Quick Metrics Bar */}
           <div className="account-metrics-bar">
@@ -170,17 +216,31 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
               <ChevronRight size={18} className="menu-chevron" />
             </div>
 
+            {/* Logout / Login Item */}
             <div className="menu-divider" />
 
-            <div
-              className="menu-item logout-item"
-              onClick={() => alert('Logged out successfully.')}
-            >
-              <div className="menu-item-left">
-                <LogOut size={20} color="#E53935" />
-                <span style={{ color: '#E53935' }}>Log Out</span>
+            {isUserAuthenticated ? (
+              <div
+                className="menu-item logout-item"
+                onClick={handleLogout}
+              >
+                <div className="menu-item-left">
+                  <LogOut size={20} color="#E53935" />
+                  <span style={{ color: '#E53935', fontWeight: '700' }}>Log Out from Account</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div
+                className="menu-item"
+                onClick={() => navigate('/login')}
+              >
+                <div className="menu-item-left">
+                  <LogIn size={20} color="var(--primary-green)" />
+                  <span style={{ color: 'var(--primary-green)', fontWeight: '700' }}>Sign In with Email & Password</span>
+                </div>
+                <ChevronRight size={18} className="menu-chevron" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -220,14 +280,21 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
         }
 
         .profile-avatar-wrap {
-          width: 64px;
-          height: 64px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           background: var(--surface-light-green);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          border: 2px solid var(--primary-green-light);
+        }
+
+        .profile-avatar-letter {
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: var(--primary-green);
         }
 
         .profile-info {
@@ -248,7 +315,7 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
         }
 
         .profile-email {
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           color: var(--primary-green);
           font-weight: 600;
         }
@@ -263,6 +330,94 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
           color: var(--text-dark);
           padding: 3px 8px;
           border-radius: var(--radius-pill);
+        }
+
+        /* Guest Callout */
+        .guest-login-banner {
+          background: linear-gradient(135deg, #FFFFFF 0%, #F5FAF6 100%);
+          border: 1px solid #D8EFE5;
+          border-radius: var(--radius-xl);
+          padding: 22px 20px;
+          box-shadow: var(--shadow-xs);
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .guest-login-content {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .guest-avatar-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 50%;
+          background: #EAF6F0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .guest-text h3 {
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: var(--charcoal);
+          margin-bottom: 3px;
+        }
+
+        .guest-text p {
+          font-size: 0.82rem;
+          color: var(--text-muted);
+          line-height: 1.35;
+        }
+
+        .guest-actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .btn-guest-login {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: var(--primary-green);
+          color: #FFFFFF;
+          padding: 10px 16px;
+          border-radius: var(--radius-pill);
+          font-size: 0.88rem;
+          font-weight: 700;
+          border: none;
+          cursor: pointer;
+          transition: background var(--transition-fast);
+        }
+
+        .btn-guest-login:hover {
+          background: #053D27;
+        }
+
+        .btn-guest-register {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: #FFFFFF;
+          color: var(--primary-green);
+          border: 1.5px solid var(--primary-green);
+          padding: 10px 16px;
+          border-radius: var(--radius-pill);
+          font-size: 0.88rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+
+        .btn-guest-register:hover {
+          background: #EFF8F4;
         }
 
         .account-metrics-bar {
@@ -381,3 +536,5 @@ export const AccountPage = ({ navigate, onOpenWholesale }) => {
     </div>
   );
 };
+
+export default AccountPage;

@@ -25,6 +25,7 @@ import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { AccountPage } from './pages/AccountPage';
+import { LoginPage } from './pages/LoginPage';
 import { SearchPage } from './pages/SearchPage';
 import { OffersPage } from './pages/OffersPage';
 import { AdminPage } from './pages/AdminPage';
@@ -49,7 +50,7 @@ export const App = () => {
     const [path, search] = url.split('?');
     window.history.pushState({}, '', url);
     setCurrentPath(path || '/');
-    setSearchParams(new URLSearchParams(search || ''));
+    setSearchParams(new URLSearchParams(search ? `?${search}` : ''));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -127,7 +128,20 @@ export const App = () => {
       return <WishlistPage navigate={navigate} />;
     }
 
-    // 9. Account Page
+    // 9. Login & Account Creation Page
+    if (currentPath === '/login' || currentPath === '/register') {
+      const initialMode = currentPath === '/register' || searchParams.get('mode') === 'register' ? 'register' : 'login';
+      const returnTo = searchParams.get('returnTo') || '/account';
+      return (
+        <LoginPage
+          navigate={navigate}
+          initialMode={initialMode}
+          returnTo={returnTo}
+        />
+      );
+    }
+
+    // 10. Account Page
     if (currentPath === '/account') {
       return (
         <AccountPage
@@ -137,13 +151,13 @@ export const App = () => {
       );
     }
 
-    // 10. Search Page
+    // 11. Search Page
     if (currentPath === '/search') {
       const initialQuery = searchParams.get('q') || '';
       return <SearchPage initialQuery={initialQuery} navigate={navigate} />;
     }
 
-    // 11. Offers Page
+    // 12. Offers Page
     if (currentPath === '/offers') {
       return <OffersPage navigate={navigate} />;
     }
