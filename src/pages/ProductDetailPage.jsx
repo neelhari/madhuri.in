@@ -127,50 +127,31 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           <div className="pdp-info-col">
             {/* Category & Rating */}
             <div className="pdp-header-row">
-              <span className="pdp-category-name">{product.categoryName}</span>
+              <span className="pdp-category-name">{product.categoryName || product.category}</span>
               <div className="rating-badge">
                 <Star size={14} fill="#FFDE59" color="#D9A800" />
-                <span>{product.rating}</span>
-                <span className="rating-count">({product.reviewCount} customer reviews)</span>
+                <span>{product.rating || '4.9'}</span>
+                <span className="rating-count">({product.reviewCount || '80+'} reviews)</span>
               </div>
             </div>
 
             <h1 className="pdp-title">{product.name}</h1>
-            <p className="pdp-short-desc">{product.shortDescription}</p>
+            <p className="pdp-short-desc">{product.shortDescription || product.description}</p>
 
-            {/* Delivery Location Check */}
-            <div className="pdp-delivery-box">
-              <div className="delivery-icon-box">
-                <Truck size={20} />
-              </div>
-              <div className="delivery-text-box">
-                <span className="delivery-status-txt">
-                  ⚡ Express 90-min delivery available to:
-                </span>
-                <span className="delivery-area-txt">
-                  {currentLocation.area}, {currentLocation.pincode}
-                </span>
-              </div>
-              <button
-                className="delivery-change-btn"
-                onClick={() => setIsLocationModalOpen(true)}
-              >
-                Change
-              </button>
-            </div>
-
-            {/* Weight Selection Box */}
+            {/* Select Weight & Price Cards */}
             <div className="pdp-weight-box">
               <div className="weight-box-header">
-                <span className="weight-box-title">Select Pack Weight:</span>
-                <span className="weight-box-sub">
-                  Net: {selectedWeight.netWeight} • {selectedWeight.serves}
-                </span>
+                <span className="weight-box-title">Select Pack Weight & Price:</span>
+                {selectedWeight.serves && (
+                  <span className="weight-box-sub">Ideal for {selectedWeight.serves}</span>
+                )}
               </div>
 
               <div className="pdp-weights-grid">
                 {product.weights?.map((w) => {
                   const isSelected = w.id === selectedWeight.id;
+                  const discountPercent = w.discount || (w.originalPrice && w.originalPrice > w.price ? Math.round(((w.originalPrice - w.price) / w.originalPrice) * 100) : 0);
+                  
                   return (
                     <div
                       key={w.id}
@@ -183,24 +164,16 @@ export const ProductDetailPage = ({ slug, navigate }) => {
                       </div>
                       <div className="pdp-weight-prices">
                         <span className="w-price">₹{w.price}</span>
-                        <span className="w-mrp">₹{w.originalPrice}</span>
+                        {w.originalPrice && w.originalPrice > w.price && (
+                          <span className="w-mrp">₹{w.originalPrice}</span>
+                        )}
                       </div>
-                      <span className="w-discount">{w.discount}% OFF</span>
+                      {discountPercent > 0 && (
+                        <span className="w-discount">{discountPercent}% OFF</span>
+                      )}
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Price & Savings Display */}
-            <div className="pdp-pricing-card">
-              <div className="pdp-price-breakdown">
-                <div className="pdp-price-current">₹{selectedWeight.price}</div>
-                <div className="pdp-price-mrp">MRP ₹{selectedWeight.originalPrice}</div>
-                <span className="badge badge-discount">{selectedWeight.discount}% OFF</span>
-              </div>
-              <div className="pdp-savings-note">
-                You save ₹{selectedWeight.originalPrice - selectedWeight.price} on this pack
               </div>
             </div>
 
@@ -243,80 +216,25 @@ export const ProductDetailPage = ({ slug, navigate }) => {
               </button>
             </div>
 
-            {/* Tabs for Details, Freshness & Cooking */}
-            <div className="pdp-tabs-container">
-              <div className="pdp-tab-headers">
-                <button
-                  className={`pdp-tab-btn ${activeTab === 'details' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('details')}
-                >
-                  Description
-                </button>
-                <button
-                  className={`pdp-tab-btn ${activeTab === 'freshness' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('freshness')}
-                >
-                  Freshness & Handling
-                </button>
-                <button
-                  className={`pdp-tab-btn ${activeTab === 'cooking' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('cooking')}
-                >
-                  Cooking Ideas
-                </button>
+            {/* Clean Trust & Delivery Highlights */}
+            <div className="pdp-clean-highlights">
+              <div className="pdp-highlight-pill">
+                <ShieldCheck size={18} color="var(--primary-green)" />
+                <span>100% Antibiotic-Free & Hygienic</span>
               </div>
-
-              <div className="pdp-tab-body">
-                {activeTab === 'details' && (
-                  <div className="pdp-tab-content">
-                    <p className="pdp-tab-text">{product.description}</p>
-                    <div className="pdp-spec-table">
-                      <div className="spec-row">
-                        <span className="spec-label">Cut Type:</span>
-                        <span className="spec-val">{product.name}</span>
-                      </div>
-                      <div className="spec-row">
-                        <span className="spec-label">Net Pack Weight:</span>
-                        <span className="spec-val">{selectedWeight.netWeight}</span>
-                      </div>
-                      <div className="spec-row">
-                        <span className="spec-label">Ideal For:</span>
-                        <span className="spec-val">{selectedWeight.serves}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'freshness' && (
-                  <div className="pdp-tab-content">
-                    <div className="freshness-bullet-item">
-                      <ShieldCheck size={18} color="var(--primary-green)" />
-                      <div>
-                        <strong>Temperature Controlled:</strong>
-                        <p>{product.freshnessInfo}</p>
-                      </div>
-                    </div>
-                    <div className="freshness-bullet-item">
-                      <Sparkles size={18} color="var(--primary-green)" />
-                      <div>
-                        <strong>Hygienic Preparation:</strong>
-                        <p>{product.handling}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'cooking' && (
-                  <div className="pdp-tab-content">
-                    <div className="cooking-recommendation-box">
-                      <ChefHat size={22} color="var(--primary-green)" />
-                      <div>
-                        <strong>Master Chef's Note:</strong>
-                        <p>{product.cookingRecommendation}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <div className="pdp-highlight-pill">
+                <Sparkles size={18} color="var(--primary-green)" />
+                <span>Daily Farm-Fresh Cut</span>
+              </div>
+              <div className="pdp-highlight-pill delivery-pill">
+                <Truck size={18} color="var(--primary-green)" />
+                <span>⚡ Express Delivery to <strong>{currentLocation.area || 'Bangalore'}</strong></span>
+                <button
+                  className="delivery-pill-btn"
+                  onClick={() => setIsLocationModalOpen(true)}
+                >
+                  Change
+                </button>
               </div>
             </div>
           </div>
@@ -654,7 +572,7 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
 
         .pdp-qty-control-wrap {
@@ -679,116 +597,46 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           font-size: 0.95rem;
         }
 
-        /* Tabs */
-        .pdp-tabs-container {
-          border-top: 1px solid var(--border-color);
-          padding-top: 24px;
-        }
-
-        .pdp-tab-headers {
+        /* Clean Trust & Delivery Highlights */
+        .pdp-clean-highlights {
           display: flex;
-          gap: 18px;
-          border-bottom: 1.5px solid var(--border-color);
-          margin-bottom: 16px;
+          flex-direction: column;
+          gap: 10px;
+          background: #F4F9F1;
+          border: 1px solid #DCE7D6;
+          border-radius: var(--radius-lg);
+          padding: 16px 20px;
+          margin-top: 8px;
         }
 
-        .pdp-tab-btn {
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: var(--text-muted);
-          padding-bottom: 10px;
-          position: relative;
-          transition: color var(--transition-fast);
-        }
-
-        .pdp-tab-btn.active {
-          color: var(--primary-green);
-        }
-
-        .pdp-tab-btn.active::after {
-          content: '';
-          position: absolute;
-          bottom: -1.5px;
-          left: 0;
-          right: 0;
-          height: 2.5px;
-          background: var(--primary-green);
-        }
-
-        .pdp-tab-body {
-          font-size: 0.9rem;
-          color: var(--text-dark);
-          line-height: 1.6;
-        }
-
-        .pdp-spec-table {
-          margin-top: 16px;
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          overflow: hidden;
-        }
-
-        .spec-row {
+        .pdp-highlight-pill {
           display: flex;
-          padding: 8px 14px;
-          border-bottom: 1px solid var(--border-light);
-        }
-
-        .spec-row:last-child {
-          border-bottom: none;
-        }
-
-        .spec-label {
-          width: 140px;
-          font-weight: 700;
-          color: var(--text-muted);
-          font-size: 0.82rem;
-        }
-
-        .spec-val {
+          align-items: center;
+          gap: 10px;
+          font-size: 0.84rem;
           font-weight: 600;
-          color: var(--text-dark);
-          font-size: 0.85rem;
+          color: #2D3748;
         }
 
-        .freshness-bullet-item {
+        .pdp-highlight-pill.delivery-pill {
+          padding-top: 8px;
+          border-top: 1px dashed #CBD5E0;
           display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          margin-bottom: 14px;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 8px;
         }
 
-        .freshness-bullet-item strong {
-          display: block;
+        .delivery-pill-btn {
+          font-size: 0.78rem;
+          font-weight: 700;
           color: var(--primary-green);
-          font-size: 0.88rem;
-          margin-bottom: 2px;
-        }
-
-        .freshness-bullet-item p {
-          font-size: 0.82rem;
-          color: var(--text-muted);
-        }
-
-        .cooking-recommendation-box {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          background: var(--surface-light-green);
-          padding: 16px;
-          border-radius: var(--radius-md);
-        }
-
-        .cooking-recommendation-box strong {
-          display: block;
-          color: var(--primary-green);
-          font-size: 0.9rem;
-          margin-bottom: 4px;
-        }
-
-        .cooking-recommendation-box p {
-          font-size: 0.85rem;
-          color: var(--text-dark);
+          text-decoration: underline;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
         }
 
         @media (max-width: 900px) {

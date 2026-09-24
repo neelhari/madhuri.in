@@ -499,27 +499,75 @@ export const ProductsManager = () => {
                 </div>
               </div>
 
-              {/* Row 2: Short Description */}
+              {/* Row 2: Product Image & Upload */}
               <div className="form-group">
-                <label className="form-label">Short Tagline / Summary</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g. Tender farm-raised chicken cut into curry-sized pieces. 100% antibiotic-free."
-                  value={formData.shortDescription}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shortDescription: e.target.value })
-                  }
-                />
+                <div className="image-field-header">
+                  <label className="form-label">Product Photo *</label>
+                  <button
+                    type="button"
+                    className="btn-add-img-link"
+                    onClick={handleAddImageSlot}
+                  >
+                    <Plus size={13} /> Add Another Photo
+                  </button>
+                </div>
+
+                <div className="images-inputs-list">
+                  {formData.images.map((imgUrl, index) => (
+                    <div key={index} className="image-input-item-clean">
+                      <div className="img-upload-row">
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt=""
+                            className="img-preview-thumb"
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=200&q=80';
+                            }}
+                          />
+                        ) : (
+                          <div className="img-preview-empty">No Image</div>
+                        )}
+                        <div className="img-inputs-stack">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, index)}
+                            className="file-upload-styled"
+                          />
+                          <input
+                            type="url"
+                            className="form-input form-input-sm"
+                            placeholder="Or paste image URL..."
+                            value={imgUrl}
+                            onChange={(e) =>
+                              handleImageUrlChange(index, e.target.value)
+                            }
+                          />
+                        </div>
+                        {formData.images.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn-remove-img"
+                            onClick={() => handleRemoveImageSlot(index)}
+                            title="Remove Photo"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Row 3: Weight Variants & Pricing (Crucial for meat & seafood) */}
+              {/* Row 3: Weight Variants & Pricing */}
               <div className="weights-editor-section">
                 <div className="weights-section-header">
                   <div>
-                    <h4 className="weights-heading">Weight & Pricing Options</h4>
+                    <h4 className="weights-heading">Pack Sizes & Pricing *</h4>
                     <p className="weights-sub">
-                      Configure pack sizes (500g, 1kg) and prices.
+                      Enter pack weight, selling price, and original MRP.
                     </p>
                   </div>
                   <button
@@ -533,13 +581,13 @@ export const ProductsManager = () => {
 
                 <div className="weights-list">
                   {formData.weights.map((w, index) => (
-                    <div key={w.id || index} className="weight-item-row">
-                      <div className="weight-col">
-                        <label className="w-col-label">Weight Label</label>
+                    <div key={w.id || index} className="weight-item-row-clean">
+                      <div className="w-input-field">
+                        <label className="w-col-label">Weight</label>
                         <input
                           type="text"
                           className="form-input form-input-sm"
-                          placeholder="500 g"
+                          placeholder="e.g. 500 g"
                           value={w.label}
                           onChange={(e) =>
                             handleWeightChange(index, 'label', e.target.value)
@@ -548,12 +596,12 @@ export const ProductsManager = () => {
                         />
                       </div>
 
-                      <div className="weight-col">
+                      <div className="w-input-field">
                         <label className="w-col-label">Selling Price (₹)</label>
                         <input
                           type="number"
                           className="form-input form-input-sm"
-                          placeholder="175"
+                          placeholder="180"
                           value={w.price}
                           onChange={(e) =>
                             handleWeightChange(index, 'price', e.target.value)
@@ -562,153 +610,52 @@ export const ProductsManager = () => {
                         />
                       </div>
 
-                      <div className="weight-col">
-                        <label className="w-col-label">Original Price (₹)</label>
+                      <div className="w-input-field">
+                        <label className="w-col-label">MRP Price (₹)</label>
                         <input
                           type="number"
                           className="form-input form-input-sm"
                           placeholder="220"
                           value={w.originalPrice}
                           onChange={(e) =>
-                            handleWeightChange(
-                              index,
-                              'originalPrice',
-                              e.target.value
-                            )
+                            handleWeightChange(index, 'originalPrice', e.target.value)
                           }
                         />
                       </div>
 
-                      <div className="weight-col">
-                        <label className="w-col-label">Serves</label>
-                        <input
-                          type="text"
-                          className="form-input form-input-sm"
-                          placeholder="2-3 people"
-                          value={w.serves}
-                          onChange={(e) =>
-                            handleWeightChange(index, 'serves', e.target.value)
-                          }
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        className="btn-del-weight"
-                        onClick={() => handleRemoveWeightOption(index)}
-                        title="Remove Weight"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 4: Images */}
-              <div className="form-group">
-                <div className="image-field-header">
-                  <label className="form-label">Product Image URLs / Upload</label>
-                  <button
-                    type="button"
-                    className="btn-add-img-link"
-                    onClick={handleAddImageSlot}
-                  >
-                    <Plus size={13} /> Add Another Photo
-                  </button>
-                </div>
-
-                <div className="images-inputs-list">
-                  {formData.images.map((imgUrl, index) => (
-                    <div key={index} className="image-input-item">
-                      <div className="img-input-flex">
-                        <input
-                          type="url"
-                          className="form-input"
-                          placeholder="https://images.unsplash.com/..."
-                          value={imgUrl}
-                          onChange={(e) =>
-                            handleImageUrlChange(index, e.target.value)
-                          }
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, index)}
-                          className="file-upload-compact"
-                        />
-                        {formData.images.length > 1 && (
+                      <div className="w-delete-btn-wrap">
+                        {formData.weights.length > 1 && (
                           <button
                             type="button"
-                            className="btn-remove-img"
-                            onClick={() => handleRemoveImageSlot(index)}
+                            className="btn-del-weight"
+                            onClick={() => handleRemoveWeightOption(index)}
+                            title="Remove Weight"
                           >
-                            ✕
+                            <Trash2 size={14} />
                           </button>
                         )}
                       </div>
-
-                      {imgUrl && (
-                        <div className="img-mini-preview">
-                          <img
-                            src={imgUrl}
-                            alt={`Preview ${index}`}
-                            onError={(e) => {
-                              e.target.src =
-                                'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=200&q=80';
-                            }}
-                          />
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Row 5: Long Description */}
+              {/* Row 4: Short Description */}
               <div className="form-group">
-                <label className="form-label">Full Product Description</label>
+                <label className="form-label">Product Description / Highlights</label>
                 <textarea
                   className="form-textarea"
                   rows={3}
-                  placeholder="Detailed description of the cuts, source, and packaging..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  placeholder="e.g. Tender, fresh, farm-raised meat expertly cut and hygienically packed. 100% chemical-free."
+                  value={formData.shortDescription || formData.description}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      shortDescription: e.target.value,
+                      description: e.target.value
+                    });
+                  }}
                 />
-              </div>
-
-              {/* Row 6: Freshness & Cooking Recommendation */}
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Freshness Standards</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={formData.freshnessInfo}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        freshnessInfo: e.target.value
-                      })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Cooking Recommendation</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={formData.cookingRecommendation}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        cookingRecommendation: e.target.value
-                      })
-                    }
-                  />
-                </div>
               </div>
 
               <div className="modal-footer-row">
@@ -1029,11 +976,13 @@ export const ProductsManager = () => {
         }
 
         .modal-large {
-          max-width: 680px;
+          max-width: 580px;
+          width: 94%;
+          overflow-x: hidden;
         }
 
         .modal-header {
-          padding: 18px 24px;
+          padding: 16px 20px;
           border-bottom: 1px solid #EDF2F7;
           display: flex;
           align-items: center;
@@ -1044,45 +993,63 @@ export const ProductsManager = () => {
           font-size: 1.15rem;
           font-weight: 800;
           color: #1A202C;
+          margin: 0;
         }
 
         .modal-close {
           font-size: 1.1rem;
           color: #A0AEC0;
           cursor: pointer;
+          background: none;
+          border: none;
+          padding: 4px 8px;
         }
 
         .modal-body-form {
-          padding: 22px 24px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 16px;
+          box-sizing: border-box;
+          width: 100%;
+          overflow-x: hidden;
         }
 
         .form-grid-2 {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 14px;
+          gap: 12px;
+        }
+
+        @media (max-width: 540px) {
+          .form-grid-2 {
+            grid-template-columns: 1fr;
+          }
         }
 
         .form-group {
           display: flex;
           flex-direction: column;
           gap: 6px;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .form-label {
-          font-size: 0.8rem;
+          font-size: 0.82rem;
           font-weight: 700;
           color: #2D3748;
         }
 
         .form-input, .form-select, .form-textarea {
+          width: 100%;
+          box-sizing: border-box;
           padding: 10px 12px;
           border: 1px solid #E2E8F0;
           border-radius: 8px;
           font-size: 0.88rem;
           outline: none;
+          transition: border-color 0.2s ease;
         }
 
         .form-input-sm {
@@ -1095,12 +1062,14 @@ export const ProductsManager = () => {
           box-shadow: 0 0 0 2px rgba(7,84,55,0.1);
         }
 
-        /* Weights Editor */
+        /* Weights Editor Clean */
         .weights-editor-section {
           background: #F8FAFC;
           border: 1px solid #E2E8F0;
           border-radius: 10px;
           padding: 14px 16px;
+          box-sizing: border-box;
+          width: 100%;
         }
 
         .weights-section-header {
@@ -1114,11 +1083,13 @@ export const ProductsManager = () => {
           font-size: 0.88rem;
           font-weight: 800;
           color: #1A202C;
+          margin: 0 0 2px 0;
         }
 
         .weights-sub {
-          font-size: 0.72rem;
+          font-size: 0.74rem;
           color: #718096;
+          margin: 0;
         }
 
         .btn-add-weight {
@@ -1131,6 +1102,8 @@ export const ProductsManager = () => {
           color: #FFFFFF;
           padding: 5px 10px;
           border-radius: 6px;
+          border: none;
+          cursor: pointer;
         }
 
         .weights-list {
@@ -1139,27 +1112,34 @@ export const ProductsManager = () => {
           gap: 8px;
         }
 
-        .weight-item-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr 1fr auto;
-          gap: 8px;
+        .weight-item-row-clean {
+          display: flex;
           align-items: flex-end;
+          gap: 8px;
           background: #FFFFFF;
-          padding: 8px 10px;
-          border-radius: 6px;
+          padding: 10px 12px;
+          border-radius: 8px;
           border: 1px solid #E2E8F0;
+          box-sizing: border-box;
+          width: 100%;
         }
 
-        .weight-col {
+        .w-input-field {
+          flex: 1;
           display: flex;
           flex-direction: column;
           gap: 4px;
+          min-width: 0;
         }
 
         .w-col-label {
-          font-size: 0.68rem;
+          font-size: 0.7rem;
           font-weight: 700;
-          color: #718096;
+          color: #4A5568;
+        }
+
+        .w-delete-btn-wrap {
+          flex-shrink: 0;
         }
 
         .btn-del-weight {
@@ -1169,6 +1149,9 @@ export const ProductsManager = () => {
           border-radius: 6px;
           border: 1px solid #FEB2B2;
           cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         /* Images editor */
@@ -1176,6 +1159,7 @@ export const ProductsManager = () => {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          margin-bottom: 6px;
         }
 
         .btn-add-img-link {
@@ -1185,6 +1169,9 @@ export const ProductsManager = () => {
           display: flex;
           align-items: center;
           gap: 4px;
+          background: none;
+          border: none;
+          cursor: pointer;
         }
 
         .images-inputs-list {
@@ -1193,43 +1180,69 @@ export const ProductsManager = () => {
           gap: 8px;
         }
 
-        .image-input-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
+        .image-input-item-clean {
+          background: #F8FAFC;
+          border: 1px solid #E2E8F0;
+          border-radius: 8px;
+          padding: 10px;
+          box-sizing: border-box;
+          width: 100%;
         }
 
-        .img-input-flex {
+        .img-upload-row {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .img-preview-thumb {
+          width: 52px;
+          height: 52px;
+          border-radius: 8px;
+          object-fit: cover;
+          border: 1px solid #CBD5E0;
+          flex-shrink: 0;
+        }
+
+        .img-preview-empty {
+          width: 52px;
+          height: 52px;
+          border-radius: 8px;
+          background: #EDF2F7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.68rem;
+          color: #A0AEC0;
+          font-weight: 600;
+          flex-shrink: 0;
+          text-align: center;
+        }
+
+        .img-inputs-stack {
           flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-width: 0;
         }
 
-        .file-upload-compact {
-          font-size: 0.72rem;
-          width: 140px;
+        .file-upload-styled {
+          font-size: 0.78rem;
+          color: #4A5568;
         }
 
         .btn-remove-img {
-          padding: 4px 8px;
-          color: #A0AEC0;
-          font-size: 0.85rem;
-        }
-
-        .img-mini-preview {
-          width: 40px;
-          height: 40px;
+          padding: 6px 10px;
+          color: #E53E3E;
+          background: #FFF5F5;
+          border: 1px solid #FEB2B2;
           border-radius: 6px;
-          overflow: hidden;
+          font-size: 0.85rem;
+          cursor: pointer;
           flex-shrink: 0;
-          background: #EDF2F7;
-        }
-
-        .img-mini-preview img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
         }
 
         .modal-footer-row {
