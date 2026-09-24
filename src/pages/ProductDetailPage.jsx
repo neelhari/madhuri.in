@@ -81,31 +81,18 @@ export const ProductDetailPage = ({ slug, navigate }) => {
     <div className="product-detail-page animate-fade-in">
       <div className="app-container">
         <div className="pdp-layout-grid">
-          {/* Left: Full-Bleed Edge-to-Edge Gallery on Mobile / Sticky Gallery on Desktop */}
+          {/* Left: Product Image Gallery */}
           <div className="pdp-gallery-col">
-            <div
-              className="pdp-main-image-wrap"
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
+            <div className="pdp-main-image-wrap">
               <img
                 src={imagesList[activeImageIndex] || imagesList[0]}
                 alt={product.name}
                 className="pdp-main-image"
               />
 
-              {/* Floating Back Button (Mobile) */}
-              <button
-                className="pdp-floating-back-btn"
-                onClick={() => navigate(-1)}
-                aria-label="Go Back"
-              >
-                <ArrowLeft size={20} color="#172018" />
-              </button>
-
               {product.tag && <span className="pdp-badge-tag">{product.tag}</span>}
 
-              {/* Floating Wishlist Button */}
+              {/* Wishlist Button */}
               <button
                 className={`pdp-wishlist-btn ${isFavorited ? 'favorited' : ''}`}
                 onClick={() => {
@@ -123,16 +110,9 @@ export const ProductDetailPage = ({ slug, navigate }) => {
                   color={isFavorited ? '#E53935' : '#172018'}
                 />
               </button>
-
-              {/* Image Counter Badge for multi-image cuts */}
-              {imagesList.length > 1 && (
-                <div className="pdp-image-counter-pill">
-                  {activeImageIndex + 1} / {imagesList.length}
-                </div>
-              )}
             </div>
 
-            {/* Gallery Thumbnails (Desktop & Tablet) */}
+            {/* Gallery Thumbnails */}
             {imagesList.length > 1 && (
               <div className="pdp-thumbnails-row">
                 {imagesList.map((img, idx) => (
@@ -146,24 +126,6 @@ export const ProductDetailPage = ({ slug, navigate }) => {
                 ))}
               </div>
             )}
-
-            {/* Trust Highlights below image on desktop */}
-            <div className="pdp-trust-card desktop-only">
-              <div className="pdp-trust-item">
-                <ShieldCheck size={20} color="var(--primary-green)" />
-                <div>
-                  <strong>100% Quality Assured</strong>
-                  <span>Antibiotic-free & hygienically prepped</span>
-                </div>
-              </div>
-              <div className="pdp-trust-item">
-                <Truck size={20} color="var(--primary-green)" />
-                <div>
-                  <strong>Cold-Chain Express Delivery</strong>
-                  <span>Chilled at 0-4°C to your doorstep</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Right: Product Info & Actions */}
@@ -327,8 +289,6 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           overflow: hidden;
           background-color: #EBF3E8;
           box-shadow: var(--shadow-sm);
-          user-select: none;
-          touch-action: pan-y;
         }
 
         .pdp-main-image {
@@ -338,32 +298,9 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           display: block;
         }
 
-        .pdp-floating-back-btn {
-          position: absolute;
-          top: 14px;
-          left: 14px;
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(6px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-          border: none;
-          cursor: pointer;
-          z-index: 10;
-          transition: transform var(--transition-fast);
-        }
-
-        .pdp-floating-back-btn:hover {
-          transform: scale(1.08);
-        }
-
         .pdp-badge-tag {
           position: absolute;
-          bottom: 14px;
+          top: 14px;
           left: 14px;
           background-color: var(--primary-yellow);
           color: var(--text-dark);
@@ -372,7 +309,6 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           padding: 4px 10px;
           border-radius: var(--radius-pill);
           text-transform: uppercase;
-          z-index: 5;
         }
 
         .pdp-wishlist-btn {
@@ -383,33 +319,18 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           height: 38px;
           border-radius: 50%;
           background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(6px);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
           border: none;
           cursor: pointer;
-          z-index: 10;
           transition: transform var(--transition-fast);
         }
 
         .pdp-wishlist-btn:hover {
-          transform: scale(1.08);
-        }
-
-        .pdp-image-counter-pill {
-          position: absolute;
-          bottom: 14px;
-          right: 14px;
-          background: rgba(0, 0, 0, 0.65);
-          backdrop-filter: blur(4px);
-          color: #FFFFFF;
-          font-size: 0.72rem;
-          font-weight: 700;
-          padding: 4px 10px;
-          border-radius: var(--radius-pill);
-          z-index: 5;
+          transform: scale(1.1);
         }
 
         .pdp-thumbnails-row {
@@ -438,34 +359,6 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-        }
-
-        .pdp-trust-card {
-          margin-top: 24px;
-          background: var(--surface-light-green);
-          border-radius: var(--radius-lg);
-          padding: 16px 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .pdp-trust-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .pdp-trust-item strong {
-          display: block;
-          font-size: 0.85rem;
-          color: var(--primary-green);
-        }
-
-        .pdp-trust-item span {
-          display: block;
-          font-size: 0.75rem;
-          color: var(--text-muted);
         }
 
         /* Right Column */
@@ -657,30 +550,33 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           padding: 0;
         }
 
-        /* Mobile Full-Bleed Edge-to-Edge Responsive Layout */
         @media (max-width: 900px) {
           .product-detail-page {
-            padding-top: 0;
+            padding-top: 12px;
           }
           .pdp-layout-grid {
             grid-template-columns: 1fr;
             gap: 20px;
-            margin-top: 0;
+            margin-top: 8px;
           }
           .pdp-gallery-col {
             position: relative;
             top: 0;
-            margin-left: -16px;
-            margin-right: -16px;
-            width: calc(100% + 32px);
+            width: 100%;
+            margin: 0;
           }
           .pdp-main-image-wrap {
-            border-radius: 0 0 24px 24px;
-            aspect-ratio: 1 / 1;
-            max-height: 420px;
+            aspect-ratio: 4 / 3;
+            border-radius: var(--radius-xl);
           }
           .pdp-thumbnails-row {
-            display: none;
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+          }
+          .pdp-thumb-btn {
+            width: 64px;
+            height: 52px;
           }
           .pdp-title {
             font-size: 1.45rem;
