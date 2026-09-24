@@ -55,7 +55,7 @@ export const ProductDetailPage = ({ slug, navigate }) => {
     navigate('/cart');
   };
 
-  const relatedProducts = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
+  const relatedProducts = (products || []).filter((p) => p.id !== product.id).slice(0, 3);
 
   return (
     <div className="product-detail-page animate-fade-in">

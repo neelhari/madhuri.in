@@ -3,15 +3,16 @@ import { Heart, ArrowLeft, ArrowRight, Trash2, ShoppingBag } from 'lucide-react'
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
-import { PRODUCTS } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 import { ProductCard } from '../components/ProductCard';
 
 export const WishlistPage = ({ navigate }) => {
+  const { products } = useStoreData();
   const { wishlistIds, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
   const { showToast } = useToast();
 
-  const wishlistedProducts = PRODUCTS.filter((p) => wishlistIds.includes(p.id));
+  const wishlistedProducts = (products || []).filter((p) => wishlistIds.includes(p.id));
 
   if (wishlistedProducts.length === 0) {
     return (

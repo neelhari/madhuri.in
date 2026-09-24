@@ -1,10 +1,11 @@
 import React from 'react';
 import { Tag, Sparkles, Copy, Check, ArrowLeft, ArrowRight, Percent } from 'lucide-react';
-import { PRODUCTS } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 import { ProductCard } from '../components/ProductCard';
 import { useToast } from '../context/ToastContext';
 
 export const OffersPage = ({ navigate }) => {
+  const { products, coupons } = useStoreData();
   const { showToast } = useToast();
 
   const handleCopy = (code) => {
@@ -12,22 +13,30 @@ export const OffersPage = ({ navigate }) => {
     showToast(`Coupon code ${code} copied to clipboard!`, 'success');
   };
 
-  const promotionalCoupons = [
-    {
-      code: 'MADUR50',
-      title: 'Flat ₹50 OFF',
-      subtitle: 'On your first order or any cart value above ₹499',
-      tag: 'First Order Special',
-      color: 'yellow'
-    },
-    {
-      code: 'FRESH10',
-      title: '10% Instant Savings',
-      subtitle: 'Valid on all chicken, mutton, and seafood orders this weekend',
-      tag: 'Weekend Feast',
-      color: 'green'
-    }
-  ];
+  const promotionalCoupons = (coupons && coupons.length > 0)
+    ? coupons.filter(c => c.isActive !== false).map(c => ({
+        code: c.code,
+        title: c.discountType === 'percent' ? `${c.discountValue}% Instant Savings` : `Flat ₹${c.discountValue} OFF`,
+        subtitle: c.description || (c.minOrderValue ? `On orders above ₹${c.minOrderValue}` : 'Valid on fresh meat & seafood'),
+        tag: c.discountType === 'percent' ? 'Limited Time Deal' : 'Special Offer',
+        color: c.discountType === 'percent' ? 'green' : 'yellow'
+      }))
+    : [
+        {
+          code: 'MADUR50',
+          title: 'Flat ₹50 OFF',
+          subtitle: 'On your first order or any cart value above ₹499',
+          tag: 'First Order Special',
+          color: 'yellow'
+        },
+        {
+          code: 'FRESH10',
+          title: '10% Instant Savings',
+          subtitle: 'Valid on all chicken, mutton, and seafood orders this weekend',
+          tag: 'Weekend Feast',
+          color: 'green'
+        }
+      ];
 
   return (
     <div className="offers-page animate-fade-in">
@@ -79,7 +88,7 @@ export const OffersPage = ({ navigate }) => {
           </div>
 
           <div className="products-grid">
-            {PRODUCTS.map((p) => (
+            {(products || []).map((p) => (
               <ProductCard key={p.id} product={p} navigate={navigate} />
             ))}
           </div>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, X, Clock, Sparkles, ArrowLeft } from 'lucide-react';
-import { PRODUCTS, POPULAR_SEARCH_TAGS, CATEGORIES } from '../data/products';
+import { POPULAR_SEARCH_TAGS } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 import { ProductCard } from '../components/ProductCard';
 
 export const SearchPage = ({ initialQuery = '', navigate }) => {
+  const { products, categories } = useStoreData();
   const [query, setQuery] = useState(initialQuery);
   const [recentSearches, setRecentSearches] = useState(() => {
     try {
@@ -50,17 +52,17 @@ export const SearchPage = ({ initialQuery = '', navigate }) => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    return PRODUCTS.filter((p) => {
+    return (products || []).filter((p) => {
       return (
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.categoryName.toLowerCase().includes(q) ||
-        p.shortDescription.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q)) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(q)) ||
+        (p.shortDescription && p.shortDescription.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
         (p.tag && p.tag.toLowerCase().includes(q))
       );
     });
-  }, [query]);
+  }, [query, products]);
 
   return (
     <div className="search-page animate-fade-in">
@@ -147,7 +149,7 @@ export const SearchPage = ({ initialQuery = '', navigate }) => {
                 <span className="discovery-title">Browse Categories</span>
               </div>
               <div className="quick-category-grid">
-                {CATEGORIES.map((cat) => (
+                {(categories || []).map((cat) => (
                   <div
                     key={cat.id}
                     className="quick-cat-card"

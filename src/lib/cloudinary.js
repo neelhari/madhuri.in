@@ -1,13 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-// Configuration from environment
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://petqlasrhpnvojwluclo.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_SECRET_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_rJfwQeChMM0BZkRbRN82Qg_qxIGS3Wf';
-
-// Supabase Storage client with direct upload authorization
-const storageClient = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false, autoRefreshToken: false }
-});
+import { supabase } from './supabaseClient';
 
 const BUCKET_NAME = 'store-assets';
 
@@ -86,7 +77,7 @@ export async function uploadToCloudinary(fileOrDataUrl, options = {}) {
     const filePath = `${cleanFolder}/${Date.now()}_${sanitizedName}`;
 
     // 3. Attempt direct upload to Supabase Storage
-    const { data: uploadData, error: uploadErr } = await storageClient.storage
+    const { data: uploadData, error: uploadErr } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, uploadPayload, {
         contentType,
@@ -94,7 +85,7 @@ export async function uploadToCloudinary(fileOrDataUrl, options = {}) {
       });
 
     if (!uploadErr && uploadData) {
-      const { data: pubData } = storageClient.storage
+      const { data: pubData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(filePath);
 

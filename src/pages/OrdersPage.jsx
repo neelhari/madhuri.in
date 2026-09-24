@@ -13,9 +13,10 @@ import {
 import { useOrders } from '../context/OrderContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
-import { PRODUCTS } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 
 export const OrdersPage = ({ navigate }) => {
+  const { products } = useStoreData();
   const { orders } = useOrders();
   const { addToCart } = useCart();
   const { showToast } = useToast();
@@ -23,7 +24,7 @@ export const OrdersPage = ({ navigate }) => {
 
   const handleReorder = (order) => {
     order.items.forEach((item) => {
-      const originalProduct = PRODUCTS.find((p) => p.id === item.productId);
+      const originalProduct = (products || []).find((p) => p.id === item.productId);
       if (originalProduct) {
         const weightObj = originalProduct.weights.find((w) => w.label === item.weight) || originalProduct.weights[0];
         addToCart(originalProduct, weightObj.id, item.quantity);
