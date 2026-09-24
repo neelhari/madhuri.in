@@ -69,6 +69,16 @@ const INITIAL_COUPONS = [
   }
 ];
 
+const INITIAL_ORGANIC_AD_BANNER = {
+  id: 'ad-organic-01',
+  title: 'Natural & Organic',
+  tagline: 'Sister Store',
+  buttonText: 'Visit madur.in',
+  redirectUrl: 'https://madur.in',
+  image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1200&q=80',
+  isActive: true
+};
+
 const generateInitialInventory = (productsList) => {
   const stockMap = {};
   productsList.forEach((prod) => {
@@ -151,7 +161,30 @@ export const StoreDataProvider = ({ children }) => {
     }
   });
 
-  // 7. Store Settings
+  // 7. Organic & Naturals Ad Promo Banner
+  const [organicAdBanner, setOrganicAdBanner] = useState(() => {
+    try {
+      const saved = localStorage.getItem('madurfresh_organic_ad_banner');
+      return saved ? JSON.parse(saved) : INITIAL_ORGANIC_AD_BANNER;
+    } catch {
+      return INITIAL_ORGANIC_AD_BANNER;
+    }
+  });
+
+  const updateOrganicAdBanner = (updatedData) => {
+    setOrganicAdBanner(prev => {
+      const updated = { ...prev, ...updatedData };
+      try {
+        localStorage.setItem('madurfresh_organic_ad_banner', JSON.stringify(updated));
+        SupabaseDB.upsertRecord('store_settings', { id: 'organic_ad_banner', settings: updated });
+      } catch (err) {
+        console.warn('Sync error:', err);
+      }
+      return updated;
+    });
+  };
+
+  // 8. Store Settings
   const [storeSettings, setStoreSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('madurfresh_settings');
@@ -467,6 +500,8 @@ export const StoreDataProvider = ({ children }) => {
         coupons,
         inventory,
         storeSettings,
+        organicAdBanner,
+        updateOrganicAdBanner,
         // Product Methods
         addProduct,
         updateProduct,

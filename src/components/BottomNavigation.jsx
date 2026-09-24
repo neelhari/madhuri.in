@@ -10,10 +10,10 @@ export const BottomNavigation = ({ currentRoute, navigate }) => {
     { id: 'categories', label: 'Categories', icon: LayoutGrid, route: '/categories' },
     {
       id: 'organics',
-      label: 'Organics',
+      label: 'Organic Foods',
       icon: Leaf,
       isExternal: true,
-      url: 'https://madhuri.in',
+      url: 'https://madur.in',
       highlightBadge: 'New'
     },
     { id: 'cart', label: 'Cart', icon: ShoppingBag, route: '/cart', badge: itemCount },

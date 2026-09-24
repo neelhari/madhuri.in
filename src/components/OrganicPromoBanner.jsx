@@ -1,9 +1,24 @@
 import React from 'react';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { useStoreData } from '../context/StoreDataContext';
 
 export const OrganicPromoBanner = () => {
+  const { organicAdBanner } = useStoreData();
+
+  if (organicAdBanner && organicAdBanner.isActive === false) {
+    return null;
+  }
+
+  const title = organicAdBanner?.title || 'Natural & Organic';
+  const tagline = organicAdBanner?.tagline || 'Sister Store';
+  const buttonText = organicAdBanner?.buttonText || 'Visit madur.in';
+  const redirectUrl = organicAdBanner?.redirectUrl || 'https://madur.in';
+  const image =
+    organicAdBanner?.image ||
+    'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1200&q=80';
+
   const handleOpenOrganicStore = () => {
-    window.open('https://madhuri.in', '_blank', 'noopener,noreferrer');
+    window.open(redirectUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -13,12 +28,15 @@ export const OrganicPromoBanner = () => {
         onClick={handleOpenOrganicStore}
         role="button"
         tabIndex={0}
-        aria-label="Visit Madhuri Organic & Naturals website"
+        style={{
+          backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.1) 100%), url(${image})`
+        }}
+        aria-label={`Visit ${title} website`}
       >
         <div className="organic-ad-bottom-bar">
           <div className="organic-ad-text-wrap">
-            <span className="organic-ad-tag">Sister Store</span>
-            <h3 className="organic-ad-title">Madhuri Organic & Naturals</h3>
+            {tagline && <span className="organic-ad-tag">{tagline}</span>}
+            <h3 className="organic-ad-title">{title}</h3>
           </div>
 
           <button
@@ -29,7 +47,7 @@ export const OrganicPromoBanner = () => {
               handleOpenOrganicStore();
             }}
           >
-            <span>Visit madhuri.in</span>
+            <span>{buttonText}</span>
             <ArrowRight size={13} />
           </button>
         </div>
@@ -45,8 +63,6 @@ export const OrganicPromoBanner = () => {
           height: 145px;
           border-radius: var(--radius-lg);
           overflow: hidden;
-          background-image: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.1) 100%),
-                            url('https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1200&q=80');
           background-size: cover;
           background-position: center;
           display: flex;
