@@ -65,7 +65,7 @@ export const AdminLoginPage = ({ navigate, onLoginSuccess }) => {
               <input
                 type="email"
                 className="form-input"
-                placeholder="admin@madhurfresh.in"
+                placeholder="madurfoods@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"

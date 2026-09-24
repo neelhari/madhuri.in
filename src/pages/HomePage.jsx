@@ -9,6 +9,7 @@ import {
 import { HeroCarousel } from '../components/HeroCarousel';
 import { CategoryCard } from '../components/CategoryCard';
 import { ProductCard } from '../components/ProductCard';
+import { OrganicPromoBanner } from '../components/OrganicPromoBanner';
 import { WhyMadurFreshCarousel } from '../components/WhyMadurFreshCarousel';
 import { TESTIMONIALS } from '../data/products';
 import { useStoreData } from '../context/StoreDataContext';
@@ -89,83 +90,8 @@ export const HomePage = ({ navigate, onOpenWholesale }) => {
           </div>
         </section>
 
-        {/* 3. LIGHT YELLOW SECTION - Dynamically powered by real live products */}
-        {highlightCards.length > 0 && (
-          <section className="highlight-blur-section">
-            <div className="highlight-section-content">
-              <div className="highlight-header">
-                <div>
-                  <span className="highlight-badge">FEATURED ARTISANAL SELECTION</span>
-                  <h3 className="highlight-title">Crafted for Exceptional Taste</h3>
-                </div>
-                <div className="carousel-arrows-mini">
-                  <button
-                    className="arrow-mini"
-                    onClick={() =>
-                      setActiveHighlightIndex((prev) =>
-                        prev === 0 ? highlightCards.length - 1 : prev - 1
-                      )
-                    }
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    className="arrow-mini"
-                    onClick={() =>
-                      setActiveHighlightIndex(
-                        (prev) => (prev + 1) % highlightCards.length
-                      )
-                    }
-                    aria-label="Next"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Cards Track: Dynamically loaded from real products */}
-              <div className="highlight-cards-track">
-                {highlightCards.map((card, idx) => {
-                  const isFocused = idx === activeHighlightIndex;
-                  return (
-                    <div
-                      key={card.id}
-                      className={`focus-card ${isFocused ? 'card-focused' : ''}`}
-                      onClick={() => {
-                        setActiveHighlightIndex(idx);
-                        navigate(`/product/${card.slug || card.id}`);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="focus-card-media">
-                        <img src={card.image} alt={card.title} />
-                        <span className="focus-card-tag">{card.tag}</span>
-                      </div>
-                      <div className="focus-card-body">
-                        <h4 className="focus-card-title">{card.title}</h4>
-                        <p className="focus-card-sub">{card.subtitle}</p>
-                        <div className="focus-card-footer">
-                          <span className="focus-card-price">From {card.price}</span>
-                          <button
-                            className="focus-card-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/product/${card.slug || card.id}`);
-                            }}
-                          >
-                            <span>Explore</span>
-                            <ArrowRight size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
+        {/* 3. MADHURI ORGANIC & NATURALS - Sister Website Banner */}
+        <OrganicPromoBanner />
 
         {/* 4. Popular Cuts (2-col on mobile, 4-col on desktop) */}
         <section className="section popular-picks-section">

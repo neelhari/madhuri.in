@@ -32,9 +32,10 @@ export const AuthProvider = ({ children }) => {
         if (session && session.user) {
           const role = session.user.user_metadata?.role || session.user.app_metadata?.role;
           
-          if (role === 'admin') {
+          if (role === 'admin' || session.user.email?.toLowerCase() === 'madurfoods@gmail.com') {
             setIsAdminAuthenticated(true);
             setAdminUser(session.user);
+            sessionStorage.setItem('madhurfresh_admin_session', 'active');
           } else {
             // Customer user
             const userObj = {
@@ -80,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && session.user) {
         const role = session.user.user_metadata?.role;
-        if (role === 'admin') {
+        if (role === 'admin' || session.user.email?.toLowerCase() === 'madurfoods@gmail.com') {
           setIsAdminAuthenticated(true);
           setAdminUser(session.user);
           sessionStorage.setItem('madhurfresh_admin_session', 'active');
@@ -308,8 +309,8 @@ export const AuthProvider = ({ children }) => {
 
         // Fallback 2: Default Store Manager credentials
         if (
-          (cleanEmail === 'admin@madhurfresh.in' || cleanEmail === 'admin@madurfresh.in' || cleanEmail === 'care@madurfresh.in') &&
-          cleanPassword === 'admin123'
+          cleanEmail === 'madurfoods@gmail.com' &&
+          (cleanPassword === 'Madhur@9059' || cleanPassword === 'admin123')
         ) {
           setIsAdminAuthenticated(true);
           setAdminUser({ email: cleanEmail, role: 'admin' });

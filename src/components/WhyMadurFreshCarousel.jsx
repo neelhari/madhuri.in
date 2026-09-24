@@ -6,19 +6,15 @@ export const WhyMadurFreshCarousel = () => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(390);
   const [isPaused, setIsPaused] = useState(false);
-  const [hasTransition, setHasTransition] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  // Triple the list for seamless infinite horizontal scrolling: [0..3, 0..3, 0..3]
-  // Middle set starts at index 4 (item 0)
-  const items = [...TRUST_BENEFITS, ...TRUST_BENEFITS, ...TRUST_BENEFITS];
-  const initialIndex = TRUST_BENEFITS.length; // 4
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const totalItems = TRUST_BENEFITS.length;
 
-  // Measure container width
+  // Measure container width reliably
   useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
+        setContainerWidth(containerRef.current.offsetWidth || 390);
       }
     };
     updateWidth();
@@ -26,56 +22,28 @@ export const WhyMadurFreshCarousel = () => {
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  // Card dimensions
+  // Responsive card dimensions
   const isMobile = containerWidth < 640;
-  const cardWidth = isMobile ? Math.min(containerWidth * 0.72, 280) : 320;
+  const cardWidth = isMobile ? Math.min(containerWidth * 0.76, 290) : 320;
   const gap = isMobile ? 12 : 18;
 
-  // Auto rotation every 3.5 seconds
+  // Safe cyclic next and prev handlers
   const nextSlide = useCallback(() => {
-    setHasTransition(true);
-    setCurrentIndex((prev) => prev + 1);
-  }, []);
+    setActiveIndex((prev) => (prev + 1) % totalItems);
+  }, [totalItems]);
 
   const prevSlide = useCallback(() => {
-    setHasTransition(true);
-    setCurrentIndex((prev) => prev - 1);
-  }, []);
+    setActiveIndex((prev) => (prev - 1 + totalItems) % totalItems);
+  }, [totalItems]);
 
+  // Robust auto-rotation that never desynchronizes
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(() => {
       nextSlide();
-    }, 3500);
+    }, 3800);
     return () => clearInterval(timer);
   }, [isPaused, nextSlide]);
-
-  // Handle infinite loop reset without animation
-  const handleTransitionEnd = () => {
-    // If we've reached the end of the middle set (index >= 8 for 4 items)
-    if (currentIndex >= TRUST_BENEFITS.length * 2) {
-      setHasTransition(false);
-      setCurrentIndex((prev) => prev - TRUST_BENEFITS.length);
-    }
-    // If we've gone backwards past the middle set (index < 4)
-    else if (currentIndex < TRUST_BENEFITS.length) {
-      setHasTransition(false);
-      setCurrentIndex((prev) => prev + TRUST_BENEFITS.length);
-    }
-  };
-
-  // Re-enable transitions after reset
-  useEffect(() => {
-    if (!hasTransition) {
-      // Force repaint then re-enable transition
-      const timer = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setHasTransition(true);
-        });
-      });
-      return () => cancelAnimationFrame(timer);
-    }
-  }, [hasTransition]);
 
   // Touch Swipe Handling
   const touchStartX = useRef(0);
@@ -100,18 +68,13 @@ export const WhyMadurFreshCarousel = () => {
         prevSlide();
       }
     }
-    // Resume auto rotation after 4s
-    setTimeout(() => setIsPaused(false), 4000);
+    setTimeout(() => setIsPaused(false), 3000);
   };
 
-  // Dot Click
-  const handleDotClick = (targetIndex) => {
+  const handleDotClick = (index) => {
     setIsPaused(true);
-    setHasTransition(true);
-    const currentBase = currentIndex % TRUST_BENEFITS.length;
-    const stepDiff = targetIndex - currentBase;
-    setCurrentIndex((prev) => prev + stepDiff);
-    setTimeout(() => setIsPaused(false), 4000);
+    setActiveIndex(index);
+    setTimeout(() => setIsPaused(false), 3000);
   };
 
   const getIcon = (name) => {
@@ -124,9 +87,8 @@ export const WhyMadurFreshCarousel = () => {
     }
   };
 
-  // Center alignment math
-  const trackOffset = (containerWidth / 2) - (currentIndex * (cardWidth + gap)) - (cardWidth / 2);
-  const realActiveIndex = currentIndex % TRUST_BENEFITS.length;
+  // Center alignment offset calculation (always within valid bounds)
+  const trackOffset = (containerWidth / 2) - (activeIndex * (cardWidth + gap)) - (cardWidth / 2);
 
   return (
     <section className="section why-carousel-section">
@@ -148,26 +110,27 @@ export const WhyMadurFreshCarousel = () => {
           className="why-carousel-track"
           style={{
             transform: `translateX(${trackOffset}px)`,
-            transition: hasTransition ? 'transform 600ms cubic-bezier(0.25, 1, 0.35, 1)' : 'none'
+            transition: 'transform 500ms cubic-bezier(0.25, 1, 0.35, 1)'
           }}
-          onTransitionEnd={handleTransitionEnd}
         >
-          {items.map((item, idx) => {
-            const isCenter = idx === currentIndex;
-            const isLeft = idx === currentIndex - 1;
-            const isRight = idx === currentIndex + 1;
+          {TRUST_BENEFITS.map((item, idx) => {
+            const isCenter = idx === activeIndex;
+            const isNeighbor = Math.abs(idx - activeIndex) === 1 || 
+              (activeIndex === 0 && idx === totalItems - 1) || 
+              (activeIndex === totalItems - 1 && idx === 0);
 
             return (
               <div
-                key={`${item.id}-${idx}`}
-                className={`why-card ${isCenter ? 'card-center' : isLeft || isRight ? 'card-side' : 'card-hidden'}`}
+                key={item.id}
+                className={`why-card ${isCenter ? 'card-center' : isNeighbor ? 'card-side' : 'card-subtle'}`}
                 style={{
                   width: `${cardWidth}px`,
                   marginRight: `${gap}px`
                 }}
                 onClick={() => {
-                  if (isLeft) prevSlide();
-                  if (isRight) nextSlide();
+                  if (!isCenter) {
+                    setActiveIndex(idx);
+                  }
                 }}
               >
                 <div className="why-icon-bubble">
@@ -186,9 +149,9 @@ export const WhyMadurFreshCarousel = () => {
         {TRUST_BENEFITS.map((_, i) => (
           <button
             key={i}
-            className={`why-dot ${i === realActiveIndex ? 'active' : ''}`}
+            className={`why-dot ${i === activeIndex ? 'active' : ''}`}
             onClick={() => handleDotClick(i)}
-            aria-label={`Slide ${i + 1}`}
+            aria-label={`Go to slide ${i + 1}`}
           />
         ))}
       </div>
@@ -235,10 +198,10 @@ export const WhyMadurFreshCarousel = () => {
           align-items: center;
           justify-content: center;
           min-height: 180px;
-          transition: transform 600ms cubic-bezier(0.25, 1, 0.35, 1),
-                      opacity 600ms ease,
-                      box-shadow 600ms ease,
-                      border-color 600ms ease;
+          transition: transform 500ms cubic-bezier(0.25, 1, 0.35, 1),
+                      opacity 500ms ease,
+                      box-shadow 500ms ease,
+                      border-color 500ms ease;
           border: 1px solid var(--border-color);
         }
 
@@ -252,21 +215,23 @@ export const WhyMadurFreshCarousel = () => {
           z-index: 5;
         }
 
-        /* SIDE CARDS: Smaller, Scale ~0.84, Opacity ~0.65, Weaker Shadow */
+        /* SIDE CARDS: Scale ~0.88, Opacity ~0.75 */
         .why-card.card-side {
-          transform: scale(0.85);
-          opacity: 0.65;
+          transform: scale(0.88);
+          opacity: 0.75;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
           border-color: var(--border-color);
           z-index: 2;
           cursor: pointer;
         }
 
-        /* HIDDEN CARDS */
-        .why-card.card-hidden {
-          transform: scale(0.75);
-          opacity: 0.3;
+        /* SUBTLE CARDS: Visible, never hidden */
+        .why-card.card-subtle {
+          transform: scale(0.82);
+          opacity: 0.5;
+          border-color: var(--border-light);
           z-index: 1;
+          cursor: pointer;
         }
 
         .why-icon-bubble {
@@ -279,7 +244,7 @@ export const WhyMadurFreshCarousel = () => {
           align-items: center;
           justify-content: center;
           margin-bottom: 12px;
-          transition: transform 600ms ease;
+          transition: transform 500ms ease;
         }
 
         .card-center .why-icon-bubble {
@@ -330,3 +295,5 @@ export const WhyMadurFreshCarousel = () => {
     </section>
   );
 };
+
+export default WhyMadurFreshCarousel;

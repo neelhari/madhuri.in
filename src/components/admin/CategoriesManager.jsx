@@ -73,7 +73,8 @@ export const CategoriesManager = () => {
         setFormData((prev) => ({ ...prev, image: res.url }));
       }
     } catch (err) {
-      alert('Cloudinary upload failed: ' + (err.message || 'Please check your connection'));
+      console.error('Category image upload failed:', err);
+      alert('Upload failed: ' + (err.message || 'Please check your connection'));
     } finally {
       setIsUploading(false);
     }

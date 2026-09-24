@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react';
+import { Home, LayoutGrid, ShoppingBag, User, Leaf } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export const BottomNavigation = ({ currentRoute, navigate }) => {
@@ -8,14 +8,31 @@ export const BottomNavigation = ({ currentRoute, navigate }) => {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home, route: '/' },
     { id: 'categories', label: 'Categories', icon: LayoutGrid, route: '/categories' },
+    {
+      id: 'organics',
+      label: 'Organics',
+      icon: Leaf,
+      isExternal: true,
+      url: 'https://madhuri.in',
+      highlightBadge: 'New'
+    },
     { id: 'cart', label: 'Cart', icon: ShoppingBag, route: '/cart', badge: itemCount },
     { id: 'account', label: 'Account', icon: User, route: '/account' }
   ];
 
   const isActive = (route) => {
+    if (!route) return false;
     if (route === '/' && currentRoute === '/') return true;
     if (route !== '/' && currentRoute.startsWith(route)) return true;
     return false;
+  };
+
+  const handleItemClick = (item) => {
+    if (item.isExternal) {
+      window.open(item.url, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(item.route);
+    }
   };
 
   return (
@@ -27,13 +44,20 @@ export const BottomNavigation = ({ currentRoute, navigate }) => {
         return (
           <button
             key={item.id}
-            className={`bottom-nav-item ${active ? 'active' : ''}`}
-            onClick={() => navigate(item.route)}
+            className={`bottom-nav-item ${active ? 'active' : ''} ${item.isExternal ? 'nav-item-organic' : ''}`}
+            onClick={() => handleItemClick(item)}
             aria-label={item.label}
           >
             <div className="nav-icon-container">
-              <IconComponent size={20} strokeWidth={active ? 2.2 : 1.7} />
+              <IconComponent
+                size={20}
+                strokeWidth={active ? 2.2 : 1.7}
+                className={item.isExternal ? 'organic-leaf-icon' : ''}
+              />
               {item.badge > 0 && <span className="bottom-nav-badge">{item.badge}</span>}
+              {item.highlightBadge && (
+                <span className="bottom-nav-organic-tag">{item.highlightBadge}</span>
+              )}
             </div>
             <span className="nav-label">{item.label}</span>
           </button>
@@ -74,10 +98,21 @@ export const BottomNavigation = ({ currentRoute, navigate }) => {
           position: relative;
           transition: color var(--transition-fast);
           padding-top: 4px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
         }
 
         .bottom-nav-item.active {
           color: var(--deep-forest-green);
+        }
+
+        .nav-item-organic {
+          color: #15803D;
+        }
+
+        .organic-leaf-icon {
+          color: #16A34A;
         }
 
         .nav-icon-container {
@@ -104,8 +139,22 @@ export const BottomNavigation = ({ currentRoute, navigate }) => {
           border: 1.5px solid #FFFFFF;
         }
 
+        .bottom-nav-organic-tag {
+          position: absolute;
+          top: -6px;
+          right: -12px;
+          background: #22C55E;
+          color: #FFFFFF;
+          font-size: 0.55rem;
+          font-weight: 900;
+          padding: 1px 4px;
+          border-radius: 4px;
+          letter-spacing: 0.02em;
+          box-shadow: 0 1px 3px rgba(34, 197, 94, 0.4);
+        }
+
         .nav-label {
-          font-size: 0.68rem;
+          font-size: 0.66rem;
           font-weight: 600;
           margin-top: 2px;
           letter-spacing: -0.01em;
@@ -114,3 +163,5 @@ export const BottomNavigation = ({ currentRoute, navigate }) => {
     </nav>
   );
 };
+
+export default BottomNavigation;

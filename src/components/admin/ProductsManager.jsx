@@ -236,7 +236,8 @@ export const ProductsManager = () => {
         handleImageUrlChange(index, res.url);
       }
     } catch (err) {
-      alert('Cloudinary upload failed: ' + (err.message || 'Please check your connection'));
+      console.error('Product image upload failed:', err);
+      alert('Upload failed: ' + (err.message || 'Please check your connection'));
     } finally {
       setIsUploadingIndex(null);
     }
