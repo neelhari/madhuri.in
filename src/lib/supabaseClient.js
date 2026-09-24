@@ -2,8 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://petqlasrhpnvojwluclo.supabase.co';
 // Use secret key if available for administrative permissions, fallback to anon key
-const supabaseKey = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_SUPABASE_SECRET_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY)) || 'sb_publishable_rJfwQeChMM0BZkRbRN82Qg_qxIGS3Wf';
-
+const supabaseKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || 'sb_publishable_rJfwQeChMM0BZkRbRN82Qg_qxIGS3Wf';
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
