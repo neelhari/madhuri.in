@@ -211,10 +211,10 @@ export const InventoryManager = () => {
 
                     <td className="td-center">
                       <input
-                        type="number"
-                        min="0"
+                        type="text"
+                        inputMode="numeric"
                         className="stock-inline-input"
-                        value={item.stockCount || 0}
+                        value={item.stockCount ?? ''}
                         onChange={(e) =>
                           updateStock(
                             item.productId,

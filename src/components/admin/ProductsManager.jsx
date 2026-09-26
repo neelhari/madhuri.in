@@ -156,22 +156,16 @@ export const ProductsManager = () => {
     const updatedWeights = [...formData.weights];
     const item = { ...updatedWeights[index] };
 
+    item[field] = value;
+
     if (field === 'price' || field === 'originalPrice') {
-      const num = parseInt(value, 10) || 0;
-      item[field] = num;
-      if (field === 'price' && item.originalPrice > 0) {
-        item.discount = Math.max(
-          0,
-          Math.round(((item.originalPrice - num) / item.originalPrice) * 100)
-        );
-      } else if (field === 'originalPrice' && item.price > 0 && num > item.price) {
-        item.discount = Math.max(
-          0,
-          Math.round(((num - item.price) / num) * 100)
-        );
+      const p = parseInt(field === 'price' ? value : item.price, 10);
+      const op = parseInt(field === 'originalPrice' ? value : item.originalPrice, 10);
+      if (!isNaN(p) && !isNaN(op) && op > p && op > 0) {
+        item.discount = Math.round(((op - p) / op) * 100);
+      } else {
+        item.discount = 0;
       }
-    } else {
-      item[field] = value;
     }
 
     updatedWeights[index] = item;
@@ -256,8 +250,24 @@ export const ProductsManager = () => {
       return;
     }
 
+    const cleanedWeights = formData.weights.map((w) => {
+      const price = parseInt(w.price, 10) || 0;
+      const originalPrice = parseInt(w.originalPrice, 10) || price;
+      let discount = 0;
+      if (originalPrice > price && originalPrice > 0) {
+        discount = Math.round(((originalPrice - price) / originalPrice) * 100);
+      }
+      return {
+        ...w,
+        price,
+        originalPrice,
+        discount
+      };
+    });
+
     const payload = {
       ...formData,
+      weights: cleanedWeights,
       images: cleanedImages
     };
 
@@ -599,10 +609,11 @@ export const ProductsManager = () => {
                       <div className="w-input-field">
                         <label className="w-col-label">Selling Price (₹)</label>
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           className="form-input form-input-sm"
                           placeholder="180"
-                          value={w.price}
+                          value={w.price ?? ''}
                           onChange={(e) =>
                             handleWeightChange(index, 'price', e.target.value)
                           }
@@ -613,10 +624,11 @@ export const ProductsManager = () => {
                       <div className="w-input-field">
                         <label className="w-col-label">MRP Price (₹)</label>
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           className="form-input form-input-sm"
                           placeholder="220"
-                          value={w.originalPrice}
+                          value={w.originalPrice ?? ''}
                           onChange={(e) =>
                             handleWeightChange(index, 'originalPrice', e.target.value)
                           }

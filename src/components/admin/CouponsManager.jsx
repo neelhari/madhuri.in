@@ -253,10 +253,11 @@ export const CouponsManager = () => {
                 <div className="form-group">
                   <label className="form-label">Discount Value *</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="form-input"
                     placeholder="100"
-                    value={formData.discountValue}
+                    value={formData.discountValue ?? ''}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -272,10 +273,11 @@ export const CouponsManager = () => {
                 <div className="form-group">
                   <label className="form-label">Min Cart Value (₹)</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="form-input"
                     placeholder="499"
-                    value={formData.minOrderValue}
+                    value={formData.minOrderValue ?? ''}
                     onChange={(e) =>
                       setFormData({
                         ...formData,

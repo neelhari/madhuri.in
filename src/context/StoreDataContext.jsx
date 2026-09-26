@@ -499,18 +499,23 @@ export const StoreDataProvider = ({ children }) => {
     const key = `${productId}_${weightId}`;
     setInventory(prev => {
       const current = prev[key] || {};
-      const updatedCount = Math.max(0, parseInt(newCount, 10) || 0);
+      const isStringEmpty = newCount === '' || newCount === null;
+      const updatedCount = isStringEmpty ? '' : Math.max(0, parseInt(newCount, 10) || 0);
+      const numericCount = typeof updatedCount === 'number' ? updatedCount : 0;
       const updatedItem = {
         ...current,
         productId,
         weightId,
         stockCount: updatedCount,
-        inStock: updatedCount > 0
+        inStock: numericCount > 0
       };
-      SupabaseDB.upsertRecord('inventory', {
-        id: key,
-        ...updatedItem
-      });
+      if (!isStringEmpty) {
+        SupabaseDB.upsertRecord('inventory', {
+          id: key,
+          ...updatedItem,
+          stockCount: numericCount
+        });
+      }
       return {
         ...prev,
         [key]: updatedItem

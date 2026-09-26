@@ -170,9 +170,10 @@ export const StoreSettingsManager = () => {
               <div className="form-group">
                 <label className="form-label">Standard Delivery Charge (₹)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   className="form-input"
-                  value={formData.deliveryFee}
+                  value={formData.deliveryFee ?? ''}
                   onChange={(e) => handleChange('deliveryFee', e.target.value)}
                   required
                 />
@@ -181,9 +182,10 @@ export const StoreSettingsManager = () => {
               <div className="form-group">
                 <label className="form-label">Free Delivery Threshold (₹)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   className="form-input"
-                  value={formData.freeDeliveryThreshold}
+                  value={formData.freeDeliveryThreshold ?? ''}
                   onChange={(e) =>
                     handleChange('freeDeliveryThreshold', e.target.value)
                   }
@@ -194,9 +196,10 @@ export const StoreSettingsManager = () => {
               <div className="form-group">
                 <label className="form-label">Minimum Order Value (₹)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   className="form-input"
-                  value={formData.minimumOrderAmount || 149}
+                  value={formData.minimumOrderAmount ?? ''}
                   onChange={(e) =>
                     handleChange('minimumOrderAmount', e.target.value)
                   }
