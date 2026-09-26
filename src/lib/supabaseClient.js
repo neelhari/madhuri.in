@@ -84,6 +84,37 @@ function toPostgresPayload(tableName, record) {
     };
   }
 
+  if (tableName === 'orders') {
+    return {
+      id: record.id,
+      createdat: record.createdAt || record.createdat || new Date().toISOString(),
+      status: record.status || 'Placed',
+      statuscode: record.statusCode !== undefined ? record.statusCode : (record.statuscode || 1),
+      estimateddelivery: record.estimatedDelivery || record.estimateddelivery || '',
+      address: record.address || {},
+      items: record.items || [],
+      summary: record.summary || {},
+      paymentmethod: record.paymentMethod || record.paymentmethod || '',
+      paymentstatus: record.paymentStatus || record.paymentstatus || 'Pending'
+    };
+  }
+
+  if (tableName === 'inventory') {
+    const key = record.id || `${record.productId || record.productid}_${record.weightId || record.weightid}`;
+    return {
+      id: key,
+      productid: record.productId || record.productid,
+      productname: record.productName || record.productname || '',
+      category: record.category || '',
+      weightid: record.weightId || record.weightid || '',
+      weightlabel: record.weightLabel || record.weightlabel || '',
+      price: record.price !== undefined ? record.price : 0,
+      stockcount: record.stockCount !== undefined ? record.stockCount : (record.stockcount !== undefined ? record.stockcount : 25),
+      minthreshold: record.minThreshold !== undefined ? record.minThreshold : (record.minthreshold !== undefined ? record.minthreshold : 8),
+      instock: record.inStock !== undefined ? record.inStock : (record.instock !== false)
+    };
+  }
+
   return record;
 }
 
@@ -132,6 +163,32 @@ function fromPostgresRow(tableName, row) {
       expiresAt: row.expiresat || row.expiresAt || '',
       isActive: row.isactive !== undefined ? row.isactive : row.isActive !== false,
       usedCount: row.usedcount !== undefined ? row.usedcount : row.usedCount || 0
+    };
+  }
+
+  if (tableName === 'orders') {
+    return {
+      ...row,
+      createdAt: row.createdat || row.createdAt || new Date().toISOString(),
+      statusCode: row.statuscode !== undefined ? row.statuscode : row.statusCode,
+      estimatedDelivery: row.estimateddelivery || row.estimatedDelivery || '',
+      paymentMethod: row.paymentmethod || row.paymentMethod || '',
+      paymentStatus: row.paymentstatus || row.paymentStatus || 'Pending'
+    };
+  }
+
+  if (tableName === 'inventory') {
+    return {
+      id: row.id,
+      productId: row.productid || row.productId,
+      productName: row.productname || row.productName,
+      category: row.category,
+      weightId: row.weightid || row.weightId,
+      weightLabel: row.weightlabel || row.weightLabel,
+      price: row.price,
+      stockCount: row.stockcount !== undefined ? row.stockcount : row.stockCount,
+      minThreshold: row.minthreshold !== undefined ? row.minthreshold : row.minThreshold,
+      inStock: row.instock !== undefined ? row.instock : row.inStock
     };
   }
 

@@ -230,14 +230,16 @@ export const StoreDataProvider = ({ children }) => {
           remoteHeroBanners,
           remoteCategoryBanners,
           remoteCoupons,
-          remoteSettings
+          remoteSettings,
+          remoteInventory
         ] = await Promise.allSettled([
           SupabaseDB.fetchTable('products', products),
           SupabaseDB.fetchTable('categories', categories),
           SupabaseDB.fetchTable('hero_banners', heroBanners),
           SupabaseDB.fetchTable('category_banners', categoryBanners),
           SupabaseDB.fetchTable('coupons', coupons),
-          SupabaseDB.fetchTable('store_settings', [storeSettings])
+          SupabaseDB.fetchTable('store_settings', [storeSettings]),
+          SupabaseDB.fetchTable('inventory', [])
         ]);
 
         if (remoteProducts.status === 'fulfilled' && remoteProducts.value?.length > 0) {
@@ -292,6 +294,19 @@ export const StoreDataProvider = ({ children }) => {
           if (main) {
             setStoreSettings(prev => ({ ...prev, ...main }));
           }
+        }
+        if (remoteInventory.status === 'fulfilled' && remoteInventory.value?.length > 0) {
+          setInventory(prev => {
+            const merged = { ...prev };
+            remoteInventory.value.forEach(item => {
+              const key = item.id || `${item.productId}_${item.weightId}`;
+              merged[key] = {
+                ...merged[key],
+                ...item
+              };
+            });
+            return merged;
+          });
         }
       } catch (e) {
         console.warn('Initial Supabase fetch skipped, using local cache', e);
@@ -485,13 +500,20 @@ export const StoreDataProvider = ({ children }) => {
     setInventory(prev => {
       const current = prev[key] || {};
       const updatedCount = Math.max(0, parseInt(newCount, 10) || 0);
+      const updatedItem = {
+        ...current,
+        productId,
+        weightId,
+        stockCount: updatedCount,
+        inStock: updatedCount > 0
+      };
+      SupabaseDB.upsertRecord('inventory', {
+        id: key,
+        ...updatedItem
+      });
       return {
         ...prev,
-        [key]: {
-          ...current,
-          stockCount: updatedCount,
-          inStock: updatedCount > 0
-        }
+        [key]: updatedItem
       };
     });
   };
