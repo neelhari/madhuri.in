@@ -29,7 +29,7 @@ export const OrganicPromoBanner = () => {
         role="button"
         tabIndex={0}
         style={{
-          backgroundImage: `linear-gradient(to right, rgba(6, 40, 25, 0.92) 0%, rgba(6, 40, 25, 0.7) 50%, rgba(6, 40, 25, 0.3) 100%), url(${image})`
+          backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.45) 45%, rgba(0, 0, 0, 0.1) 85%, transparent 100%), url(${image})`
         }}
         aria-label={`Visit ${title} website`}
       >
@@ -37,9 +37,9 @@ export const OrganicPromoBanner = () => {
           <div className="organic-ad-text-wrap">
             <div className="organic-tag-row">
               <span className="organic-ad-tag">
-                <Leaf size={12} /> {tagline}
+                <Leaf size={12} /> 100% Certified Organic
               </span>
-              <span className="organic-ad-subtag desktop-only">100% Certified Farm-to-Table</span>
+              <span className="organic-ad-subtag desktop-only">Farm-to-Table</span>
             </div>
             <h3 className="organic-ad-title">{title}</h3>
             <p className="organic-ad-desc desktop-only">

@@ -59,8 +59,9 @@ export const App = () => {
   const renderCurrentPage = () => {
     // 0. Admin Panel Route
     if (isAdminRoute) {
-      let initialTab = 'products';
-      if (currentPath === '/admin/banners') initialTab = 'banners';
+      let initialTab = 'overview';
+      if (currentPath === '/admin/overview' || currentPath === '/admin') initialTab = 'overview';
+      else if (currentPath === '/admin/banners') initialTab = 'banners';
       else if (currentPath === '/admin/categories') initialTab = 'categories';
       else if (currentPath === '/admin/products') initialTab = 'products';
       else if (currentPath === '/admin/inventory') initialTab = 'inventory';

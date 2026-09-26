@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { AdminLoginPage } from './AdminLoginPage';
 import { AdminLayout } from '../components/admin/AdminLayout';
+import { OverviewDashboard } from '../components/admin/OverviewDashboard';
 import { BannersManager } from '../components/admin/BannersManager';
 import { CategoriesManager } from '../components/admin/CategoriesManager';
 import { ProductsManager } from '../components/admin/ProductsManager';
@@ -11,7 +12,7 @@ import { CustomersManager } from '../components/admin/CustomersManager';
 import { CouponsManager } from '../components/admin/CouponsManager';
 import { StoreSettingsManager } from '../components/admin/StoreSettingsManager';
 
-export const AdminPage = ({ navigate, initialTab = 'products' }) => {
+export const AdminPage = ({ navigate, initialTab = 'overview' }) => {
   const { isAdminAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -21,6 +22,8 @@ export const AdminPage = ({ navigate, initialTab = 'products' }) => {
 
   const renderActiveModule = () => {
     switch (activeTab) {
+      case 'overview':
+        return <OverviewDashboard onNavigateTab={setActiveTab} navigate={navigate} />;
       case 'banners':
         return <BannersManager />;
       case 'categories':
@@ -38,7 +41,7 @@ export const AdminPage = ({ navigate, initialTab = 'products' }) => {
       case 'settings':
         return <StoreSettingsManager />;
       default:
-        return <ProductsManager />;
+        return <OverviewDashboard onNavigateTab={setActiveTab} navigate={navigate} />;
     }
   };
 
@@ -54,3 +57,4 @@ export const AdminPage = ({ navigate, initialTab = 'products' }) => {
 };
 
 export default AdminPage;
+

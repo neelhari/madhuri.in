@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  LayoutDashboard,
   Image,
   FolderTree,
   Package,
@@ -23,6 +24,7 @@ import { useOrders } from '../../context/OrderContext';
 import { useAuth } from '../../context/AuthContext';
 
 export const ADMIN_TABS = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, description: 'Store health & live metrics' },
   { id: 'banners', label: 'Banners', icon: Image, description: 'Home & category banner visuals' },
   { id: 'categories', label: 'Categories', icon: FolderTree, description: 'Meat & seafood categories' },
   { id: 'products', label: 'Products', icon: Package, description: 'Catalog, pricing & weights' },
