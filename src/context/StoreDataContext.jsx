@@ -176,7 +176,17 @@ export const StoreDataProvider = ({ children }) => {
       const updated = { ...prev, ...updatedData };
       try {
         localStorage.setItem('madurfresh_organic_ad_banner', JSON.stringify(updated));
-        SupabaseDB.upsertRecord('store_settings', { id: 'organic_ad_banner', settings: updated });
+        SupabaseDB.upsertRecord('category_banners', {
+          categoryId: 'organic_ad_banner',
+          categoryName: updated.title || 'Natural & Organic',
+          bannerImage: updated.image || '',
+          tagline: updated.tagline || 'Sister Store',
+          promoText: JSON.stringify({
+            buttonText: updated.buttonText || 'Visit madur.in',
+            redirectUrl: updated.redirectUrl || 'https://madur.in',
+            isActive: updated.isActive !== false
+          })
+        });
       } catch (err) {
         console.warn('Sync error:', err);
       }
@@ -219,13 +229,15 @@ export const StoreDataProvider = ({ children }) => {
           remoteCategories,
           remoteHeroBanners,
           remoteCategoryBanners,
-          remoteCoupons
+          remoteCoupons,
+          remoteSettings
         ] = await Promise.allSettled([
           SupabaseDB.fetchTable('products', products),
           SupabaseDB.fetchTable('categories', categories),
           SupabaseDB.fetchTable('hero_banners', heroBanners),
           SupabaseDB.fetchTable('category_banners', categoryBanners),
-          SupabaseDB.fetchTable('coupons', coupons)
+          SupabaseDB.fetchTable('coupons', coupons),
+          SupabaseDB.fetchTable('store_settings', [storeSettings])
         ]);
 
         if (remoteProducts.status === 'fulfilled' && remoteProducts.value?.length > 0) {
@@ -238,10 +250,48 @@ export const StoreDataProvider = ({ children }) => {
           setHeroBanners(remoteHeroBanners.value);
         }
         if (remoteCategoryBanners.status === 'fulfilled' && remoteCategoryBanners.value?.length > 0) {
-          setCategoryBanners(remoteCategoryBanners.value);
+          const allBanners = remoteCategoryBanners.value;
+          const adRow = allBanners.find(
+            (b) => (b.categoryId || b.categoryid) === 'organic_ad_banner'
+          );
+          const regularCatBanners = allBanners.filter(
+            (b) => (b.categoryId || b.categoryid) !== 'organic_ad_banner'
+          );
+
+          if (regularCatBanners.length > 0) {
+            setCategoryBanners(regularCatBanners);
+          }
+
+          if (adRow) {
+            let promoMeta = {};
+            try {
+              if (adRow.promoText || adRow.promotext) {
+                promoMeta = JSON.parse(adRow.promoText || adRow.promotext);
+              }
+            } catch {}
+            const restoredAd = {
+              id: 'ad-organic-01',
+              title: adRow.categoryName || adRow.categoryname || 'Natural & Organic',
+              tagline: adRow.tagline || 'Sister Store',
+              buttonText: promoMeta.buttonText || 'Visit madur.in',
+              redirectUrl: promoMeta.redirectUrl || 'https://madur.in',
+              image: adRow.bannerImage || adRow.bannerimage || INITIAL_ORGANIC_AD_BANNER.image,
+              isActive: promoMeta.isActive !== undefined ? promoMeta.isActive : true
+            };
+            setOrganicAdBanner(restoredAd);
+            try {
+              localStorage.setItem('madurfresh_organic_ad_banner', JSON.stringify(restoredAd));
+            } catch {}
+          }
         }
         if (remoteCoupons.status === 'fulfilled' && remoteCoupons.value?.length > 0) {
           setCoupons(remoteCoupons.value);
+        }
+        if (remoteSettings.status === 'fulfilled' && remoteSettings.value?.length > 0) {
+          const main = remoteSettings.value.find(s => s.id === 'main_settings') || remoteSettings.value[0];
+          if (main) {
+            setStoreSettings(prev => ({ ...prev, ...main }));
+          }
         }
       } catch (e) {
         console.warn('Initial Supabase fetch skipped, using local cache', e);
@@ -485,7 +535,12 @@ export const StoreDataProvider = ({ children }) => {
   const updateSettings = (newSettings) => {
     setStoreSettings(prev => {
       const updated = { ...prev, ...newSettings };
-      SupabaseDB.upsertRecord('store_settings', { id: 'main_settings', settings: updated });
+      try {
+        localStorage.setItem('madurfresh_settings', JSON.stringify(updated));
+        SupabaseDB.upsertRecord('store_settings', { id: 'main_settings', ...updated });
+      } catch (err) {
+        console.warn('Settings sync error:', err);
+      }
       return updated;
     });
   };

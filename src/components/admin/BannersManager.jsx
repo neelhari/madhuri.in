@@ -61,6 +61,16 @@ export const BannersManager = () => {
     isActive: true
   });
 
+  // Toast notification state
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
   const handleOpenAdd = () => {
     setEditingBanner(null);
     setFormData({
@@ -90,8 +100,10 @@ export const BannersManager = () => {
 
     if (editingBanner) {
       updateHeroBanner(editingBanner.id, formData);
+      showToast('✓ Hero Banner updated and saved to Supabase!');
     } else {
       addHeroBanner(formData);
+      showToast('✓ New Hero Banner created and saved to Supabase!');
     }
     setIsModalOpen(false);
   };
@@ -115,6 +127,7 @@ export const BannersManager = () => {
       return;
     }
     updateCategoryBanner(catFormData.categoryId, catFormData);
+    showToast(`✓ ${catFormData.categoryName} banner updated and synced to Supabase!`);
     setIsCatModalOpen(false);
   };
 
@@ -139,6 +152,7 @@ export const BannersManager = () => {
       return;
     }
     updateOrganicAdBanner(adFormData);
+    showToast('✓ Ad Promo Banner updated and saved to Supabase & Live Store!');
     setIsAdModalOpen(false);
   };
 
@@ -177,6 +191,13 @@ export const BannersManager = () => {
 
   return (
     <div className="banners-manager-container">
+      {toastMessage && (
+        <div className="banner-sync-toast">
+          <CheckCircle2 size={18} color="#16A34A" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Tab Switcher */}
       <div className="tab-switcher-row">
         <div className="tab-pill-group">
@@ -768,6 +789,32 @@ export const BannersManager = () => {
           display: flex;
           flex-direction: column;
           gap: 20px;
+        }
+
+        .banner-sync-toast {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: #ECFDF5;
+          border: 1px solid #6EE7B7;
+          color: #065F46;
+          font-size: 0.9rem;
+          font-weight: 700;
+          padding: 12px 18px;
+          border-radius: var(--radius-md);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+          animation: slideDownToast 0.25s ease-out;
+        }
+
+        @keyframes slideDownToast {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .tab-switcher-row {

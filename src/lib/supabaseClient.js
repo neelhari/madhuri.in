@@ -31,6 +31,15 @@ function toPostgresPayload(tableName, record) {
     };
   }
 
+  if (tableName === 'hero_banners') {
+    return {
+      id: Number(record.id) || Date.now(),
+      title: record.title || '',
+      category: record.category || 'chicken',
+      image: record.image || ''
+    };
+  }
+
   if (tableName === 'category_banners') {
     return {
       categoryid: record.categoryId || record.categoryid,
@@ -55,6 +64,26 @@ function toPostgresPayload(tableName, record) {
     };
   }
 
+  if (tableName === 'store_settings') {
+    return {
+      id: record.id || 'main_settings',
+      name: record.name || 'MadhurFresh',
+      tagline: record.tagline || 'The Quality Choice',
+      owner: record.owner || 'Sindhusha G',
+      phone: record.phone || '+91 98765 43210',
+      whatsapp: record.whatsapp || '919876543210',
+      email: record.email || 'care@madurfresh.in',
+      deliverytime: record.deliveryTime || record.deliverytime || 'Express (45-60 mins)',
+      freedeliverythreshold: record.freeDeliveryThreshold !== undefined ? record.freeDeliveryThreshold : (record.freedeliverythreshold !== undefined ? record.freedeliverythreshold : 499),
+      deliveryfee: record.deliveryFee !== undefined ? record.deliveryFee : (record.deliveryfee !== undefined ? record.deliveryfee : 39),
+      minimumorderamount: record.minimumOrderAmount !== undefined ? record.minimumOrderAmount : (record.minimumorderamount !== undefined ? record.minimumorderamount : 149),
+      isopen: record.isOpen !== undefined ? record.isOpen : (record.isopen !== false),
+      openingtime: record.openingTime || record.openingtime || '06:30 AM',
+      closingtime: record.closingTime || record.closingtime || '10:00 PM',
+      announcementtext: record.announcementText || record.announcementtext || '⚡ Fast 45-min delivery across Bangalore'
+    };
+  }
+
   return record;
 }
 
@@ -72,6 +101,15 @@ function fromPostgresRow(tableName, row) {
       reviewCount: row.reviewcount !== undefined ? row.reviewcount : row.reviewCount || 0,
       freshnessInfo: row.freshnessinfo || row.freshnessInfo || '',
       cookingRecommendation: row.cookingrecommendation || row.cookingRecommendation || ''
+    };
+  }
+
+  if (tableName === 'hero_banners') {
+    return {
+      id: Number(row.id),
+      title: row.title || '',
+      category: row.category || 'chicken',
+      image: row.image || ''
     };
   }
 
