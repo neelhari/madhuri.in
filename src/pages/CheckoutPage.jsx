@@ -827,6 +827,18 @@ export const CheckoutPage = ({ navigate }) => {
           margin-top: 2px;
         }
 
+        @media (min-width: 1024px) {
+          .checkout-layout-grid {
+            grid-template-columns: 1.5fr 1fr;
+            gap: 36px;
+            align-items: start;
+          }
+          .checkout-summary-col {
+            position: sticky;
+            top: 100px;
+          }
+        }
+
         @media (max-width: 900px) {
           .checkout-layout-grid {
             grid-template-columns: 1fr;

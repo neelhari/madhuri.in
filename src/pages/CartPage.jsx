@@ -759,6 +759,18 @@ export const CartPage = ({ navigate }) => {
           font-weight: 800;
         }
 
+        @media (min-width: 1024px) {
+          .cart-layout-grid {
+            grid-template-columns: 1.5fr 1fr;
+            gap: 36px;
+            align-items: start;
+          }
+          .cart-summary-col {
+            position: sticky;
+            top: 100px;
+          }
+        }
+
         @media (max-width: 900px) {
           .cart-layout-grid {
             grid-template-columns: 1fr;

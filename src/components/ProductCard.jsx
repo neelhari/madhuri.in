@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Plus, Minus } from 'lucide-react';
+import { Heart, Plus, Minus, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
@@ -66,7 +66,12 @@ export const ProductCard = ({ product, navigate }) => {
           className="product-image"
         />
 
-        {/* Small, subtle wishlist heart */}
+        {/* Desktop Quality Pill */}
+        <div className="product-top-badge desktop-only">
+          <ShieldCheck size={11} /> 100% Antibiotic-free
+        </div>
+
+        {/* Wishlist heart */}
         <button
           type="button"
           className={`wishlist-heart-btn ${isFavorited ? 'favorited' : ''}`}
@@ -74,7 +79,7 @@ export const ProductCard = ({ product, navigate }) => {
           aria-label="Wishlist"
         >
           <Heart
-            size={14}
+            size={15}
             fill={isFavorited ? '#E53935' : 'none'}
             color={isFavorited ? '#E53935' : '#17201B'}
             strokeWidth={2}
@@ -82,7 +87,7 @@ export const ProductCard = ({ product, navigate }) => {
         </button>
       </div>
 
-      {/* 40% CONTENT: Compact, strictly organized */}
+      {/* CONTENT AREA */}
       <div className="product-body">
         {/* Product Name */}
         <h3 className="product-title" title={product.name}>
@@ -92,7 +97,7 @@ export const ProductCard = ({ product, navigate }) => {
         {/* Short Descriptor */}
         <p className="product-descriptor">{shortDescriptor}</p>
 
-        {/* Weight Selector: NEVER WRAPS */}
+        {/* Weight Selector */}
         <div className="weight-pills-row">
           {product.weights?.map((w) => {
             const isSelected = w.id === selectedWeight.id;
@@ -110,7 +115,7 @@ export const ProductCard = ({ product, navigate }) => {
           })}
         </div>
 
-        {/* Price & Action Row: Clean, dominant price, compact ADD + */}
+        {/* Price & Action Row */}
         <div className="product-footer-row">
           <div className="price-container">
             <span className="price-current">₹{selectedWeight.price}</span>
@@ -131,7 +136,7 @@ export const ProductCard = ({ product, navigate }) => {
                 aria-label={`Add ${product.name} to cart`}
               >
                 <span>ADD</span>
-                <Plus size={12} strokeWidth={2.5} />
+                <Plus size={13} strokeWidth={2.5} />
               </button>
             ) : (
               <div className="qty-stepper">
@@ -141,7 +146,7 @@ export const ProductCard = ({ product, navigate }) => {
                   onClick={handleDecrement}
                   aria-label="Decrease quantity"
                 >
-                  <Minus size={12} strokeWidth={2.5} />
+                  <Minus size={13} strokeWidth={2.5} />
                 </button>
                 <span className="qty-count">{currentQty}</span>
                 <button
@@ -150,7 +155,7 @@ export const ProductCard = ({ product, navigate }) => {
                   onClick={handleIncrement}
                   aria-label="Increase quantity"
                 >
-                  <Plus size={12} strokeWidth={2.5} />
+                  <Plus size={13} strokeWidth={2.5} />
                 </button>
               </div>
             )}
@@ -169,7 +174,7 @@ export const ProductCard = ({ product, navigate }) => {
           cursor: pointer;
           position: relative;
           height: 100%;
-          transition: transform var(--transition-fast), border-color var(--transition-fast);
+          transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
         }
 
         .product-card:hover {
@@ -177,7 +182,17 @@ export const ProductCard = ({ product, navigate }) => {
           border-color: var(--deep-forest-green);
         }
 
-        /* 60% Image Area */
+        @media (min-width: 1024px) {
+          .product-card {
+            border-radius: var(--radius-lg);
+          }
+          .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(7, 84, 55, 0.12);
+          }
+        }
+
+        /* Image Area */
         .product-media-container {
           position: relative;
           width: 100%;
@@ -190,21 +205,38 @@ export const ProductCard = ({ product, navigate }) => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.3s ease;
+          transition: transform 0.35s ease;
         }
 
         .product-card:hover .product-image {
-          transform: scale(1.04);
+          transform: scale(1.05);
+        }
+
+        .product-top-badge {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(4px);
+          color: var(--deep-forest-green);
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 2px 7px;
+          border-radius: var(--radius-pill);
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .wishlist-heart-btn {
           position: absolute;
           top: 6px;
           right: 6px;
-          width: 26px;
-          height: 26px;
+          width: 28px;
+          height: 28px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.92);
           backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
@@ -213,19 +245,25 @@ export const ProductCard = ({ product, navigate }) => {
         }
 
         .wishlist-heart-btn:hover {
-          transform: scale(1.08);
+          transform: scale(1.12);
         }
 
         .wishlist-heart-btn.favorited {
           background: #FFF5F5;
         }
 
-        /* 40% Content Area: Highly compact */
+        /* Content Area */
         .product-body {
           padding: 8px 10px 10px;
           display: flex;
           flex-direction: column;
           flex: 1;
+        }
+
+        @media (min-width: 1024px) {
+          .product-body {
+            padding: 12px 14px 14px;
+          }
         }
 
         .product-title {
@@ -241,6 +279,14 @@ export const ProductCard = ({ product, navigate }) => {
           min-height: 2.1em;
         }
 
+        @media (min-width: 1024px) {
+          .product-title {
+            font-size: 1.02rem;
+            font-weight: 800;
+            line-height: 1.3;
+          }
+        }
+
         .product-descriptor {
           font-size: 0.68rem;
           color: var(--text-muted);
@@ -250,7 +296,14 @@ export const ProductCard = ({ product, navigate }) => {
           text-overflow: ellipsis;
         }
 
-        /* Weight Selector: NEVER WRAPS */
+        @media (min-width: 1024px) {
+          .product-descriptor {
+            font-size: 0.76rem;
+            margin-bottom: 8px;
+          }
+        }
+
+        /* Weight Selector */
         .weight-pills-row {
           display: flex;
           align-items: center;
@@ -283,6 +336,15 @@ export const ProductCard = ({ product, navigate }) => {
           transition: all var(--transition-fast);
         }
 
+        @media (min-width: 1024px) {
+          .weight-pill {
+            height: 26px;
+            padding: 0 10px;
+            font-size: 0.76rem;
+            border-radius: var(--radius-xs);
+          }
+        }
+
         .weight-pill:hover {
           border-color: var(--deep-forest-green);
           color: var(--charcoal);
@@ -295,13 +357,13 @@ export const ProductCard = ({ product, navigate }) => {
           font-weight: 700;
         }
 
-        /* Footer Row: Dominant price, subtle MRP & discount, compact ADD + */
+        /* Footer Row */
         .product-footer-row {
           display: flex;
           align-items: flex-end;
           justify-content: space-between;
           margin-top: auto;
-          padding-top: 2px;
+          padding-top: 4px;
         }
 
         .price-container {
@@ -314,6 +376,12 @@ export const ProductCard = ({ product, navigate }) => {
           font-size: 1.05rem;
           font-weight: 800;
           color: var(--deep-forest-green);
+        }
+
+        @media (min-width: 1024px) {
+          .price-current {
+            font-size: 1.25rem;
+          }
         }
 
         .price-sub-row {
@@ -333,15 +401,15 @@ export const ProductCard = ({ product, navigate }) => {
         .discount-tag {
           font-size: 0.65rem;
           font-weight: 700;
-          color: #8A928B;
+          color: #16A34A;
         }
 
-        /* Compact ADD Button */
+        /* ADD Button */
         .btn-add-to-cart {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 3px;
+          gap: 4px;
           height: 26px;
           background-color: #FFFFFF;
           color: var(--deep-forest-green);
@@ -357,10 +425,20 @@ export const ProductCard = ({ product, navigate }) => {
         .btn-add-to-cart:hover {
           background-color: var(--deep-forest-green);
           color: #FFFFFF;
+          box-shadow: 0 2px 8px rgba(7, 84, 55, 0.2);
         }
 
         .btn-add-to-cart:active {
           transform: scale(0.96);
+        }
+
+        @media (min-width: 1024px) {
+          .btn-add-to-cart {
+            height: 32px;
+            padding: 0 14px;
+            font-size: 0.82rem;
+            border-radius: var(--radius-sm);
+          }
         }
 
         /* Stepper */
@@ -374,9 +452,16 @@ export const ProductCard = ({ product, navigate }) => {
           overflow: hidden;
         }
 
+        @media (min-width: 1024px) {
+          .qty-stepper {
+            height: 32px;
+            border-radius: var(--radius-sm);
+          }
+        }
+
         .qty-btn {
-          width: 22px;
-          height: 26px;
+          width: 24px;
+          height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -384,39 +469,34 @@ export const ProductCard = ({ product, navigate }) => {
           transition: background-color var(--transition-fast);
         }
 
+        @media (min-width: 1024px) {
+          .qty-btn {
+            width: 28px;
+          }
+        }
+
         .qty-btn:hover {
           background-color: var(--dark-green);
         }
 
         .qty-count {
-          min-width: 16px;
+          min-width: 18px;
           text-align: center;
-          font-size: 0.72rem;
+          font-size: 0.76rem;
           font-weight: 700;
         }
 
-        @media (min-width: 768px) {
-          .product-body {
-            padding: 10px 12px 12px;
-          }
-          .product-title {
-            font-size: 0.92rem;
-          }
-          .weight-pill {
-            height: 24px;
-            padding: 0 8px;
-            font-size: 0.72rem;
-          }
-          .price-current {
-            font-size: 1.12rem;
-          }
-          .btn-add-to-cart {
-            height: 28px;
-            padding: 0 10px;
-            font-size: 0.78rem;
+        .desktop-only {
+          display: none;
+        }
+
+        @media (min-width: 1024px) {
+          .desktop-only {
+            display: inline-flex;
           }
         }
       `}</style>
     </div>
   );
 };
+

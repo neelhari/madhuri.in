@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowUpRight, Leaf } from 'lucide-react';
 import { useStoreData } from '../context/StoreDataContext';
 
 export const OrganicPromoBanner = () => {
@@ -15,7 +15,7 @@ export const OrganicPromoBanner = () => {
   const redirectUrl = organicAdBanner?.redirectUrl || 'https://madur.in';
   const image =
     organicAdBanner?.image ||
-    'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1200&q=80';
+    'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1400&q=85';
 
   const handleOpenOrganicStore = () => {
     window.open(redirectUrl, '_blank', 'noopener,noreferrer');
@@ -29,14 +29,22 @@ export const OrganicPromoBanner = () => {
         role="button"
         tabIndex={0}
         style={{
-          backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.1) 100%), url(${image})`
+          backgroundImage: `linear-gradient(to right, rgba(6, 40, 25, 0.92) 0%, rgba(6, 40, 25, 0.7) 50%, rgba(6, 40, 25, 0.3) 100%), url(${image})`
         }}
         aria-label={`Visit ${title} website`}
       >
-        <div className="organic-ad-bottom-bar">
+        <div className="organic-ad-content-wrapper">
           <div className="organic-ad-text-wrap">
-            {tagline && <span className="organic-ad-tag">{tagline}</span>}
+            <div className="organic-tag-row">
+              <span className="organic-ad-tag">
+                <Leaf size={12} /> {tagline}
+              </span>
+              <span className="organic-ad-subtag desktop-only">100% Certified Farm-to-Table</span>
+            </div>
             <h3 className="organic-ad-title">{title}</h3>
+            <p className="organic-ad-desc desktop-only">
+              Pure cold-pressed oils, native grains, wild honey, natural jaggery & chemical-free grocery.
+            </p>
           </div>
 
           <button
@@ -48,7 +56,7 @@ export const OrganicPromoBanner = () => {
             }}
           >
             <span>{buttonText}</span>
-            <ArrowRight size={13} />
+            <ArrowUpRight size={16} />
           </button>
         </div>
       </div>
@@ -56,7 +64,13 @@ export const OrganicPromoBanner = () => {
       <style>{`
         .organic-ad-banner-container {
           position: relative;
-          margin: 12px 0 16px 0;
+          margin: 12px 0 18px 0;
+        }
+
+        @media (min-width: 1024px) {
+          .organic-ad-banner-container {
+            margin: 24px 0 32px 0;
+          }
         }
 
         .organic-ad-banner {
@@ -66,52 +80,70 @@ export const OrganicPromoBanner = () => {
           background-size: cover;
           background-position: center;
           display: flex;
-          flex-direction: column;
-          justify-content: flex-end;
-          padding: 12px 16px 12px 16px;
+          align-items: center;
+          padding: 16px 20px;
           cursor: pointer;
           box-shadow: var(--shadow-sm);
           border: 1px solid rgba(0, 0, 0, 0.08);
-          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+          transition: all 0.25s ease;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 1024px) {
           .organic-ad-banner {
-            height: 180px;
-            padding: 16px 20px;
+            height: 190px;
+            padding: 24px 36px;
+            border-radius: var(--radius-xl);
           }
         }
 
         .organic-ad-banner:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 10px 30px rgba(6, 40, 25, 0.25);
         }
 
-        .organic-ad-bottom-bar {
+        .organic-ad-content-wrapper {
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: space-between;
           width: 100%;
-          gap: 12px;
+          gap: 16px;
           z-index: 2;
         }
 
         .organic-ad-text-wrap {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 4px;
+        }
+
+        .organic-tag-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
         .organic-ad-tag {
-          font-size: 0.65rem;
+          font-size: 0.68rem;
           font-weight: 800;
           color: #86EFAC;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.06em;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .organic-ad-subtag {
+          font-size: 0.72rem;
+          color: #D1FAE5;
+          font-weight: 600;
+          background: rgba(34, 197, 94, 0.2);
+          padding: 2px 8px;
+          border-radius: var(--radius-pill);
         }
 
         .organic-ad-title {
-          font-size: 1.15rem;
+          font-size: 1.25rem;
           font-weight: 800;
           color: #FFFFFF;
           margin: 0;
@@ -119,36 +151,62 @@ export const OrganicPromoBanner = () => {
           text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 1024px) {
           .organic-ad-title {
-            font-size: 1.4rem;
+            font-size: 1.7rem;
+            letter-spacing: -0.01em;
           }
+        }
+
+        .organic-ad-desc {
+          font-size: 0.85rem;
+          color: #E2E8F0;
+          max-width: 520px;
+          line-height: 1.4;
+          margin-top: 2px;
         }
 
         .btn-organic-ad {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
+          gap: 6px;
           background-color: #22C55E;
           color: #062819;
-          padding: 7px 14px;
-          font-size: 0.78rem;
+          padding: 8px 18px;
+          font-size: 0.84rem;
           font-weight: 800;
-          border-radius: var(--radius-sm);
+          border-radius: var(--radius-pill);
           border: none;
           cursor: pointer;
           flex-shrink: 0;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-          transition: transform var(--transition-fast), background 0.15s ease;
+          box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+          transition: all var(--transition-fast);
         }
 
         .btn-organic-ad:hover {
-          background-color: #16A34A;
-          color: #FFFFFF;
+          background-color: #4ADE80;
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: 0 6px 18px rgba(34, 197, 94, 0.5);
         }
 
-        .btn-organic-ad:active {
-          transform: scale(0.96);
+        @media (min-width: 1024px) {
+          .btn-organic-ad {
+            padding: 12px 24px;
+            font-size: 0.95rem;
+          }
+        }
+
+        .desktop-only {
+          display: none;
+        }
+
+        @media (min-width: 1024px) {
+          .desktop-only {
+            display: inline-flex;
+          }
+          p.desktop-only {
+            display: block;
+          }
         }
       `}</style>
     </div>
@@ -156,3 +214,4 @@ export const OrganicPromoBanner = () => {
 };
 
 export default OrganicPromoBanner;
+
