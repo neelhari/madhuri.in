@@ -283,6 +283,27 @@ img {
   animation: fadeIn 0.25s ease-out forwards;
 }
 
+/* Universal Products Grid */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+}
+
 /* Safe Area Insets */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   body {

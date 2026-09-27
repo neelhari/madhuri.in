@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -9,7 +9,18 @@ import {
   ShieldCheck,
   Building,
   Home,
-  Briefcase
+  Briefcase,
+  Plus,
+  Minus,
+  Trash2,
+  Edit2,
+  Tag,
+  Sparkles,
+  Lock,
+  ChevronRight,
+  Truck,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
@@ -18,28 +29,175 @@ import { useToast } from '../context/ToastContext';
 import { openRazorpayPayment } from '../lib/razorpay';
 
 export const CheckoutPage = ({ navigate }) => {
-  const { cartItems, grandTotal, subtotal, deliveryFee, totalSavings, clearCart } = useCart();
+  const {
+    cartItems,
+    grandTotal,
+    subtotal,
+    deliveryFee,
+    totalSavings,
+    couponSavings,
+    appliedCoupon,
+    applyCoupon,
+    removeCoupon,
+    updateQuantity,
+    removeFromCart,
+    clearCart
+  } = useCart();
+
   const { currentLocation } = useLocation();
   const { placeOrder } = useOrders();
   const { showToast } = useToast();
 
-  const [step, setStep] = useState(1);
+  // Saved Addresses List from LocalStorage (Completely clean - no dummy company data)
+  const [savedAddresses, setSavedAddresses] = useState(() => {
+    try {
+      const saved = localStorage.getItem('madurfresh_saved_addresses');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
 
-  // Address Form State
-  const [address, setAddress] = useState({
-    name: 'Sindhusha G',
-    phone: '+91 98765 43210',
-    house: 'Flat 402, Green Orchid Apartments',
-    street: '12th Main Road, 4th Cross',
-    area: currentLocation.area || 'Indiranagar',
+  // Active selected address ID
+  const [selectedAddressId, setSelectedAddressId] = useState(() => {
+    try {
+      const saved = localStorage.getItem('madurfresh_saved_addresses');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed[0].id;
+        }
+      }
+    } catch {}
+    return null;
+  });
+
+  // Address View Mode: 'saved' | 'form'
+  const [addressTab, setAddressTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem('madurfresh_saved_addresses');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return 'saved';
+        }
+      }
+    } catch {}
+    return 'form'; // If no saved address, open form directly
+  });
+
+  // Address Form State (Completely empty - no prefilled dummy user)
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [formAddress, setFormAddress] = useState({
+    name: '',
+    phone: '',
+    house: '',
+    street: '',
+    area: currentLocation.area || '',
     city: currentLocation.city || 'Bangalore',
     state: 'Karnataka',
-    pincode: currentLocation.pincode || '560038',
+    pincode: currentLocation.pincode || '',
     type: 'Home'
   });
 
+  // Selected address object
+  const activeAddress = useMemo(() => {
+    return savedAddresses.find((a) => a.id === selectedAddressId) || null;
+  }, [savedAddresses, selectedAddressId]);
+
+  // Dynamic Live Delivery Time Slots based on current real-time clock
+  const dynamicSlots = useMemo(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+
+    const slots = [];
+
+    // Calculate dynamic live Express ETA (+45 to +60 min from now)
+    const expressStart = new Date(now.getTime() + 45 * 60 * 1000);
+    const expressEnd = new Date(now.getTime() + 60 * 60 * 1000);
+    const formatTime = (d) =>
+      d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    // Store is open for instant butchery between 6:30 AM and 9:30 PM
+    const isStoreOpenForInstant =
+      currentHour >= 6 && (currentHour < 21 || (currentHour === 21 && currentMinutes <= 30));
+
+    if (isStoreOpenForInstant) {
+      slots.push({
+        id: 'express_instant',
+        title: `⚡ Express Delivery (${formatTime(expressStart)} – ${formatTime(expressEnd)})`,
+        badge: 'FASTEST • LIVE ETA',
+        desc: 'Packed in cold-chain thermal box and dispatched immediately.',
+        isExpress: true
+      });
+    } else {
+      slots.push({
+        id: 'express_next_morning',
+        title: '⚡ First Batch Express (Tomorrow 7:00 AM – 8:00 AM)',
+        badge: 'FIRST DISPATCH',
+        desc: 'Store opens at 6:30 AM. Dispatched in first morning batch.',
+        isExpress: true
+      });
+    }
+
+    // Today afternoon/evening slots if cutoff time has not passed
+    if (currentHour < 11) {
+      slots.push({
+        id: 'today_afternoon',
+        title: '🌤️ Today Afternoon (1:00 PM – 3:30 PM)',
+        badge: 'TODAY',
+        desc: 'Fresh midday butchery cut, delivered before 3:30 PM.'
+      });
+    }
+
+    if (currentHour < 16) {
+      slots.push({
+        id: 'today_evening',
+        title: '🌇 Today Evening (4:30 PM – 7:00 PM)',
+        badge: 'TODAY',
+        desc: 'Delivered fresh before evening dinner preparations.'
+      });
+    }
+
+    if (currentHour < 19) {
+      slots.push({
+        id: 'today_night',
+        title: '🌙 Today Night (7:30 PM – 9:30 PM)',
+        badge: 'TODAY',
+        desc: 'Late evening fresh delivery for dinner.'
+      });
+    }
+
+    // Tomorrow Morning & Evening slots (Always available)
+    slots.push({
+      id: 'tomorrow_morning',
+      title: '🌅 Tomorrow Morning (7:00 AM – 10:00 AM)',
+      badge: 'FRESH BATCH',
+      desc: 'Fresh morning artisanal cut, ready for breakfast & lunch preparations.'
+    });
+
+    slots.push({
+      id: 'tomorrow_evening',
+      title: '🌇 Tomorrow Evening (4:00 PM – 7:00 PM)',
+      badge: 'TOMORROW',
+      desc: 'Cut and packed in the afternoon, delivered before dinner.'
+    });
+
+    return slots;
+  }, []);
+
   // Delivery Slot State
-  const [deliverySlot, setDeliverySlot] = useState('Express 90-min Delivery (Immediate)');
+  const [selectedSlotId, setSelectedSlotId] = useState(() => dynamicSlots[0]?.id || 'express_instant');
+
+  // Coupon code input state
+  const [couponInput, setCouponInput] = useState('');
 
   // Payment State
   const [paymentMethod, setPaymentMethod] = useState('UPI (Google Pay / PhonePe / Paytm)');
@@ -47,32 +205,127 @@ export const CheckoutPage = ({ navigate }) => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="checkout-empty animate-fade-in">
+      <div className="checkout-empty-view animate-fade-in">
         <div className="app-container">
-          <p>Your cart is empty. Please add products to checkout.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/categories')}>
-            Browse Products
-          </button>
+          <div className="empty-cart-card">
+            <ShoppingBag size={56} color="#A0AEC0" />
+            <h2>Your Cart is Empty</h2>
+            <p>Add some fresh, antibiotic-free meat cuts to proceed with checkout.</p>
+            <button
+              className="btn btn-primary btn-lg"
+              onClick={() => navigate('/categories')}
+            >
+              Explore Fresh Cuts
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const handleAddressChange = (e) => {
+  const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setAddress((prev) => ({ ...prev, [name]: value }));
+    setFormAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddressSubmit = (e) => {
+  const handleOpenAddForm = () => {
+    setEditingAddressId(null);
+    setFormAddress({
+      name: '',
+      phone: '',
+      house: '',
+      street: '',
+      area: currentLocation.area || '',
+      city: currentLocation.city || 'Bangalore',
+      state: 'Karnataka',
+      pincode: currentLocation.pincode || '',
+      type: 'Home'
+    });
+    setAddressTab('form');
+  };
+
+  const handleOpenEditForm = (addr, e) => {
+    if (e) e.stopPropagation();
+    setEditingAddressId(addr.id);
+    setFormAddress({ ...addr });
+    setAddressTab('form');
+  };
+
+  const handleDeleteAddress = (id, e) => {
+    if (e) e.stopPropagation();
+    const updated = savedAddresses.filter((a) => a.id !== id);
+    setSavedAddresses(updated);
+    try {
+      localStorage.setItem('madurfresh_saved_addresses', JSON.stringify(updated));
+    } catch {}
+
+    if (selectedAddressId === id) {
+      const nextId = updated[0]?.id || null;
+      setSelectedAddressId(nextId);
+      if (!nextId) {
+        setAddressTab('form');
+      }
+    }
+    showToast('Address removed', 'info');
+  };
+
+  const handleSaveAddress = (e) => {
     e.preventDefault();
-    if (!address.name || !address.phone || !address.house || !address.pincode) {
-      showToast('Please fill in all required address fields', 'warning');
+    if (!formAddress.name?.trim() || !formAddress.phone?.trim() || !formAddress.house?.trim() || !formAddress.pincode?.trim()) {
+      showToast('Please fill in all required address fields (*)', 'warning');
       return;
     }
-    setStep(2);
+
+    let updatedList = [];
+    let savedId = editingAddressId;
+
+    if (editingAddressId) {
+      // Edit existing
+      updatedList = savedAddresses.map((a) =>
+        a.id === editingAddressId ? { ...formAddress, id: editingAddressId } : a
+      );
+    } else {
+      // Add new
+      savedId = 'addr_' + Date.now();
+      const newAddr = { ...formAddress, id: savedId };
+      updatedList = [newAddr, ...savedAddresses];
+    }
+
+    setSavedAddresses(updatedList);
+    setSelectedAddressId(savedId);
+    try {
+      localStorage.setItem('madurfresh_saved_addresses', JSON.stringify(updatedList));
+    } catch {}
+
+    setEditingAddressId(null);
+    setAddressTab('saved');
+    showToast(editingAddressId ? 'Address updated successfully!' : 'New address saved & selected!', 'success');
+  };
+
+  const handleApplyCoupon = (e) => {
+    e.preventDefault();
+    if (!couponInput.trim()) {
+      showToast('Please enter a coupon code', 'warning');
+      return;
+    }
+    const res = applyCoupon(couponInput);
+    if (res.success) {
+      showToast(res.message, 'success');
+      setCouponInput('');
+    } else {
+      showToast(res.message, 'warning');
+    }
   };
 
   const handleCompleteOrder = () => {
+    if (!activeAddress) {
+      showToast('Please add and select a delivery address first', 'warning');
+      setAddressTab('form');
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+      return;
+    }
+
+    const selectedSlotObj = dynamicSlots.find((s) => s.id === selectedSlotId) || dynamicSlots[0];
     const isCOD = paymentMethod.includes('Cash');
 
     const baseOrderData = {
@@ -84,8 +337,8 @@ export const CheckoutPage = ({ navigate }) => {
         quantity: item.quantity,
         image: item.product.images?.[0]
       })),
-      address,
-      deliverySlot,
+      address: activeAddress,
+      deliverySlot: selectedSlotObj.title,
       summary: {
         subtotal,
         deliveryFee,
@@ -114,13 +367,13 @@ export const CheckoutPage = ({ navigate }) => {
     setIsProcessing(true);
     openRazorpayPayment({
       amount: grandTotal,
-      customerName: address.name,
-      customerPhone: address.phone,
-      customerEmail: address.email || 'care@madurfresh.in',
+      customerName: activeAddress.name,
+      customerPhone: activeAddress.phone,
+      customerEmail: activeAddress.email || 'care@madurfresh.in',
       notes: {
-        deliveryArea: address.area,
-        pincode: address.pincode,
-        deliverySlot
+        deliveryArea: activeAddress.area,
+        pincode: activeAddress.pincode,
+        deliverySlot: selectedSlotObj.title
       },
       onSuccess: (paymentRes) => {
         const newOrder = placeOrder({
@@ -142,389 +395,608 @@ export const CheckoutPage = ({ navigate }) => {
     });
   };
 
-  const steps = [
-    { num: 1, label: 'Address' },
-    { num: 2, label: 'Delivery' },
-    { num: 3, label: 'Payment' }
-  ];
+  const selectedSlotObj = dynamicSlots.find((s) => s.id === selectedSlotId) || dynamicSlots[0];
 
   return (
-    <div className="checkout-page animate-fade-in">
+    <div className="single-page-checkout animate-fade-in">
       <div className="app-container">
-        <h1 className="checkout-title">Secure Checkout</h1>
-
-        {/* Checkout Stepper Progress */}
-        <div className="checkout-stepper">
-          {steps.map((s) => (
-            <div
-              key={s.num}
-              className={`stepper-item ${step === s.num ? 'active' : ''} ${step > s.num ? 'completed' : ''}`}
-              onClick={() => {
-                if (step > s.num) setStep(s.num);
-              }}
-            >
-              <div className="stepper-circle">
-                {step > s.num ? <CheckCircle2 size={16} /> : s.num}
-              </div>
-              <span className="stepper-label">{s.label}</span>
-            </div>
-          ))}
+        {/* Navigation & Header */}
+        <div className="checkout-top-nav">
+          <button
+            type="button"
+            className="btn-back-nav"
+            onClick={() => navigate('/categories')}
+          >
+            <ArrowLeft size={16} />
+            <span>Continue Shopping</span>
+          </button>
+          <div className="secure-badge-pill">
+            <Lock size={13} />
+            <span>100% Secure Checkout</span>
+          </div>
         </div>
 
-        <div className="checkout-layout-grid">
-          {/* Main Step Form Area */}
-          <div className="checkout-main-col">
-            {/* Step 1: Address */}
-            {step === 1 && (
-              <div className="checkout-card animate-fade-in">
-                <div className="step-card-header">
-                  <MapPin size={22} color="var(--primary-green)" />
-                  <div>
-                    <h3 className="step-heading">1. Delivery Address</h3>
-                    <p className="step-subheading">Where should we deliver your fresh meat?</p>
+        <h1 className="checkout-main-title">Single-Page Checkout</h1>
+
+        <div className="checkout-grid-layout">
+          {/* LEFT COLUMN: All Order Sections in One Page */}
+          <div className="checkout-sections-col">
+            {/* 1. ORDER ITEMS & CUTS */}
+            <div className="checkout-section-card">
+              <div className="section-card-header">
+                <div className="header-icon-box">
+                  <ShoppingBag size={18} color="#075437" />
+                </div>
+                <div className="header-title-text">
+                  <h3>1. Selected Fresh Cuts ({cartItems.length})</h3>
+                  <p>Review items, adjust quantities, or add more cuts</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn-add-more-cuts"
+                  onClick={() => navigate('/categories')}
+                >
+                  <Plus size={14} />
+                  <span>Add More Cuts</span>
+                </button>
+              </div>
+
+              <div className="checkout-items-list">
+                {cartItems.map((item) => (
+                  <div key={item.key} className="checkout-item-row">
+                    <img
+                      src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=300&q=80'}
+                      alt={item.product.name}
+                      className="item-row-img"
+                    />
+
+                    <div className="item-row-info">
+                      <h4 className="item-name">{item.product.name}</h4>
+                      <div className="item-meta-tags">
+                        <span className="item-pack-tag">Pack: {item.weight.label}</span>
+                        <span className="item-price-each">₹{item.weight.price} each</span>
+                      </div>
+                    </div>
+
+                    <div className="item-qty-stepper">
+                      <button
+                        type="button"
+                        className="stepper-btn"
+                        onClick={() => updateQuantity(item.productId, item.weightId, item.quantity - 1)}
+                        title="Reduce quantity"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="stepper-count">{item.quantity}</span>
+                      <button
+                        type="button"
+                        className="stepper-btn"
+                        onClick={() => updateQuantity(item.productId, item.weightId, item.quantity + 1)}
+                        title="Increase quantity"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+
+                    <div className="item-row-total">
+                      <span className="item-total-val">₹{item.weight.price * item.quantity}</span>
+                      <button
+                        type="button"
+                        className="item-remove-btn"
+                        onClick={() => removeFromCart(item.productId, item.weightId)}
+                        title="Remove item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. DELIVERY ADDRESS: DUAL BUTTONS (SAVED ADDRESSES / ADD ADDRESS) */}
+            <div className="checkout-section-card">
+              <div className="section-card-header address-section-header">
+                <div className="header-icon-box">
+                  <MapPin size={18} color="#075437" />
+                </div>
+                <div className="header-title-text">
+                  <h3>2. Delivery Address</h3>
+                  <p>Where we deliver your fresh, vacuum-packed cuts</p>
                 </div>
 
-                <form onSubmit={handleAddressSubmit} className="address-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Full Name *</label>
+                {/* TWO TOGGLE BUTTONS: Saved Addresses & Add New Address */}
+                <div className="address-tabs-toggle">
+                  <button
+                    type="button"
+                    className={`tab-btn ${addressTab === 'saved' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (savedAddresses.length === 0) {
+                        showToast('No saved addresses yet. Please fill the form below.', 'info');
+                        setAddressTab('form');
+                      } else {
+                        setAddressTab('saved');
+                      }
+                    }}
+                  >
+                    <MapPin size={13} />
+                    <span>Saved Addresses ({savedAddresses.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`tab-btn ${addressTab === 'form' ? 'active' : ''}`}
+                    onClick={handleOpenAddForm}
+                  >
+                    <Plus size={13} />
+                    <span>+ Add Address</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* TAB 1: SAVED ADDRESSES VIEW */}
+              {addressTab === 'saved' && (
+                <div className="saved-addresses-list animate-fade-in">
+                  {savedAddresses.length === 0 ? (
+                    <div className="no-address-box">
+                      <AlertCircle size={36} color="#A0AEC0" />
+                      <h4>No Saved Address Found</h4>
+                      <p>You haven't saved any delivery address yet. Click below to add one.</p>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={handleOpenAddForm}
+                      >
+                        <Plus size={14} />
+                        <span>Add New Address</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="saved-cards-grid">
+                      {savedAddresses.map((addr) => {
+                        const isSelected = selectedAddressId === addr.id;
+                        return (
+                          <div
+                            key={addr.id}
+                            className={`saved-addr-card ${isSelected ? 'selected' : ''}`}
+                            onClick={() => setSelectedAddressId(addr.id)}
+                          >
+                            <div className="saved-addr-left">
+                              <div className={`custom-radio ${isSelected ? 'checked' : ''}`}>
+                                {isSelected && <div className="radio-dot" />}
+                              </div>
+                            </div>
+
+                            <div className="saved-addr-content">
+                              <div className="saved-addr-top-line">
+                                <span className="addr-tag-chip">
+                                  {addr.type === 'Work' ? <Briefcase size={12} /> : addr.type === 'Other' ? <Building size={12} /> : <Home size={12} />}
+                                  <span>{addr.type || 'Home'}</span>
+                                </span>
+                                <strong className="addr-recipient-name">{addr.name}</strong>
+                                <span className="addr-phone">{addr.phone}</span>
+                              </div>
+
+                              <p className="addr-full-text">
+                                {addr.house}, {addr.street ? `${addr.street}, ` : ''}{addr.area}, {addr.city} - <strong>{addr.pincode}</strong>
+                              </p>
+
+                              <div className="saved-addr-actions">
+                                <button
+                                  type="button"
+                                  className="btn-addr-action"
+                                  onClick={(e) => handleOpenEditForm(addr, e)}
+                                >
+                                  <Edit2 size={12} />
+                                  <span>Edit</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-addr-action delete"
+                                  onClick={(e) => handleDeleteAddress(addr.id, e)}
+                                >
+                                  <Trash2 size={12} />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: ADD / EDIT ADDRESS FORM (EMPTY BY DEFAULT) */}
+              {addressTab === 'form' && (
+                <form onSubmit={handleSaveAddress} className="address-edit-form animate-fade-in">
+                  <div className="form-mode-title">
+                    <h4>{editingAddressId ? 'Edit Delivery Address' : 'Add New Delivery Address'}</h4>
+                    {savedAddresses.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn-link-sm"
+                        onClick={() => setAddressTab('saved')}
+                      >
+                        Cancel & View Saved Addresses
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-field-group">
+                      <label className="form-field-label">Full Name *</label>
                       <input
                         type="text"
                         name="name"
                         required
-                        value={address.name}
-                        onChange={handleAddressChange}
-                        className="form-input"
+                        value={formAddress.name}
+                        onChange={handleFormChange}
+                        placeholder="Enter recipient full name"
+                        className="form-clean-input"
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Mobile Number *</label>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label">Mobile Number *</label>
                       <input
                         type="tel"
                         name="phone"
                         required
-                        value={address.phone}
-                        onChange={handleAddressChange}
-                        className="form-input"
+                        value={formAddress.phone}
+                        onChange={handleFormChange}
+                        placeholder="10-digit mobile number"
+                        className="form-clean-input"
                       />
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">House / Flat / Building *</label>
+                  <div className="form-field-group">
+                    <label className="form-field-label">Flat / House No. / Building Name *</label>
                     <input
                       type="text"
                       name="house"
                       required
-                      value={address.house}
-                      onChange={handleAddressChange}
-                      className="form-input"
+                      value={formAddress.house}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Flat 301, Lakeview Residency"
+                      className="form-clean-input"
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Street / Landmark</label>
+                  <div className="form-field-group">
+                    <label className="form-field-label">Street / Landmark</label>
                     <input
                       type="text"
                       name="street"
-                      value={address.street}
-                      onChange={handleAddressChange}
-                      className="form-input"
+                      value={formAddress.street}
+                      onChange={handleFormChange}
+                      placeholder="e.g. 5th Cross Road, Near Green Park"
+                      className="form-clean-input"
                     />
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Area / Locality *</label>
+                  <div className="form-grid-3">
+                    <div className="form-field-group">
+                      <label className="form-field-label">Locality / Area *</label>
                       <input
                         type="text"
                         name="area"
                         required
-                        value={address.area}
-                        onChange={handleAddressChange}
-                        className="form-input"
+                        value={formAddress.area}
+                        onChange={handleFormChange}
+                        placeholder="e.g. Indiranagar"
+                        className="form-clean-input"
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">City *</label>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label">City *</label>
                       <input
                         type="text"
                         name="city"
                         required
-                        value={address.city}
-                        onChange={handleAddressChange}
-                        className="form-input"
+                        value={formAddress.city}
+                        onChange={handleFormChange}
+                        placeholder="Bangalore"
+                        className="form-clean-input"
                       />
                     </div>
-                  </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">State</label>
-                      <input
-                        type="text"
-                        name="state"
-                        value={address.state}
-                        onChange={handleAddressChange}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Pincode *</label>
+                    <div className="form-field-group">
+                      <label className="form-field-label">Pincode *</label>
                       <input
                         type="text"
                         name="pincode"
                         required
                         maxLength={6}
-                        value={address.pincode}
-                        onChange={handleAddressChange}
-                        className="form-input"
+                        value={formAddress.pincode}
+                        onChange={handleFormChange}
+                        placeholder="6-digit PIN"
+                        className="form-clean-input"
                       />
                     </div>
                   </div>
 
-                  {/* Address Type Tag */}
-                  <div className="form-group">
-                    <label className="form-label">Save Address As:</label>
-                    <div className="address-tags-row">
+                  {/* Address Type Tag Buttons */}
+                  <div className="form-field-group">
+                    <label className="form-field-label">Save Address As:</label>
+                    <div className="address-type-pill-group">
                       {[
-                        { id: 'Home', icon: Home },
-                        { id: 'Work', icon: Briefcase },
-                        { id: 'Other', icon: Building }
+                        { id: 'Home', label: 'Home', icon: Home },
+                        { id: 'Work', label: 'Work', icon: Briefcase },
+                        { id: 'Other', label: 'Other', icon: Building }
                       ].map((t) => {
                         const Icon = t.icon;
+                        const isSelected = formAddress.type === t.id;
                         return (
                           <button
                             type="button"
                             key={t.id}
-                            className={`address-tag-btn ${address.type === t.id ? 'active' : ''}`}
-                            onClick={() => setAddress((p) => ({ ...p, type: t.id }))}
+                            className={`address-type-btn ${isSelected ? 'active' : ''}`}
+                            onClick={() => setFormAddress((prev) => ({ ...prev, type: t.id }))}
                           >
                             <Icon size={14} />
-                            <span>{t.id}</span>
+                            <span>{t.label}</span>
                           </button>
                         );
                       })}
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary btn-lg btn-block">
-                    Continue to Delivery Slot
-                  </button>
+                  <div className="form-action-row">
+                    {savedAddresses.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn-cancel-flat"
+                        onClick={() => setAddressTab('saved')}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    <button type="submit" className="btn btn-primary">
+                      {editingAddressId ? 'Update & Deliver Here' : 'Save Address & Deliver Here'}
+                    </button>
+                  </div>
                 </form>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Step 2: Delivery Slot */}
-            {step === 2 && (
-              <div className="checkout-card animate-fade-in">
-                <div className="step-card-header">
-                  <Clock size={22} color="var(--primary-green)" />
-                  <div>
-                    <h3 className="step-heading">2. Choose Delivery Slot</h3>
-                    <p className="step-subheading">
-                      Select your preferred delivery time to {address.area}
-                    </p>
-                  </div>
+            {/* 3. DYNAMIC DELIVERY SLOTS */}
+            <div className="checkout-section-card">
+              <div className="section-card-header">
+                <div className="header-icon-box">
+                  <Clock size={18} color="#075437" />
                 </div>
+                <div className="header-title-text">
+                  <h3>3. Delivery Speed & Live Time Slots</h3>
+                  <p>Real-time butchery dispatch and scheduled delivery windows</p>
+                </div>
+              </div>
 
-                <div className="slots-list">
-                  {[
-                    {
-                      id: 'Express 90-min Delivery (Immediate)',
-                      title: '⚡ Express 90-Min Delivery',
-                      desc: 'Packed in cold-chain thermal box and dispatched immediately.',
-                      tag: 'Fastest'
-                    },
-                    {
-                      id: 'Tomorrow Morning (7:00 AM - 10:00 AM)',
-                      title: '🌅 Tomorrow Morning (7:00 AM - 10:00 AM)',
-                      desc: 'Fresh morning cut for breakfast & early Sunday lunch.'
-                    },
-                    {
-                      id: 'Tomorrow Evening (4:00 PM - 7:00 PM)',
-                      title: '🌇 Tomorrow Evening (4:00 PM - 7:00 PM)',
-                      desc: 'Delivered fresh before evening dinner preparations.'
-                    }
-                  ].map((slot) => {
-                    const isSelected = deliverySlot === slot.id;
-                    return (
-                      <div
-                        key={slot.id}
-                        className={`slot-card ${isSelected ? 'selected' : ''}`}
-                        onClick={() => setDeliverySlot(slot.id)}
-                      >
-                        <div className="slot-radio">
-                          <input
-                            type="radio"
-                            checked={isSelected}
-                            onChange={() => setDeliverySlot(slot.id)}
-                          />
+              <div className="delivery-slots-grid">
+                {dynamicSlots.map((slot) => {
+                  const isSelected = selectedSlotId === slot.id;
+                  return (
+                    <div
+                      key={slot.id}
+                      className={`slot-option-card ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setSelectedSlotId(slot.id)}
+                    >
+                      <input
+                        type="radio"
+                        name="delivery_slot"
+                        checked={isSelected}
+                        onChange={() => setSelectedSlotId(slot.id)}
+                        className="slot-radio-input"
+                      />
+                      <div className="slot-option-body">
+                        <div className="slot-header-row">
+                          <strong className="slot-option-title">{slot.title}</strong>
+                          {slot.badge && (
+                            <span className={`slot-badge-tag ${slot.isExpress ? 'express' : ''}`}>
+                              {slot.badge}
+                            </span>
+                          )}
                         </div>
-                        <div className="slot-info">
-                          <div className="slot-title-row">
-                            <strong className="slot-title">{slot.title}</strong>
-                            {slot.tag && (
-                              <span className="badge badge-yellow">{slot.tag}</span>
-                            )}
-                          </div>
-                          <p className="slot-desc">{slot.desc}</p>
-                        </div>
+                        <p className="slot-option-desc">{slot.desc}</p>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-                <div className="step-nav-buttons">
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => setStep(1)}
-                  >
-                    Back to Address
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setStep(3)}
-                  >
-                    Proceed to Payment
-                  </button>
+            {/* 4. PAYMENT METHOD (ALL-IN-ONE SINGLE PAGE) */}
+            <div className="checkout-section-card">
+              <div className="section-card-header">
+                <div className="header-icon-box">
+                  <CreditCard size={18} color="#075437" />
+                </div>
+                <div className="header-title-text">
+                  <h3>4. Payment Method</h3>
+                  <p>Select your preferred payment method</p>
                 </div>
               </div>
-            )}
 
-            {/* Step 3: Payment Method */}
-            {step === 3 && (
-              <div className="checkout-card animate-fade-in">
-                <div className="step-card-header">
-                  <CreditCard size={22} color="var(--primary-green)" />
-                  <div>
-                    <h3 className="step-heading">3. Payment Method</h3>
-                    <p className="step-subheading">
-                      Safe & secure checkout. Cash on Delivery is also available.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="payment-options-list">
-                  {[
-                    {
-                      id: 'UPI (Google Pay / PhonePe / Paytm)',
-                      title: 'UPI (GPay / PhonePe / Paytm)',
-                      desc: 'Instant zero-fee transfer via any UPI app',
-                      badge: 'Recommended'
-                    },
-                    {
-                      id: 'Credit / Debit Card (Visa, Mastercard, RuPay)',
-                      title: 'Credit or Debit Card',
-                      desc: 'Encrypted and processed securely'
-                    },
-                    {
-                      id: 'Cash on Delivery (Pay upon delivery)',
-                      title: 'Cash / UPI on Delivery',
-                      desc: 'Pay safely with cash or QR code when the delivery arrives'
-                    }
-                  ].map((method) => {
-                    const isSelected = paymentMethod === method.id;
-                    return (
-                      <div
-                        key={method.id}
-                        className={`payment-option-card ${isSelected ? 'selected' : ''}`}
-                        onClick={() => setPaymentMethod(method.id)}
-                      >
-                        <input
-                          type="radio"
-                          checked={isSelected}
-                          onChange={() => setPaymentMethod(method.id)}
-                        />
-                        <div className="payment-option-info">
-                          <div className="payment-title-row">
-                            <span className="payment-name">{method.title}</span>
-                            {method.badge && (
-                              <span className="badge badge-yellow">{method.badge}</span>
-                            )}
-                          </div>
-                          <span className="payment-desc">{method.desc}</span>
+              <div className="payment-methods-grid">
+                {[
+                  {
+                    id: 'UPI (Google Pay / PhonePe / Paytm)',
+                    title: 'UPI (Google Pay / PhonePe / Paytm / QR)',
+                    desc: 'Instant zero-fee transfer via any UPI app',
+                    badge: 'Recommended',
+                    isOnline: true
+                  },
+                  {
+                    id: 'Credit / Debit Card (Visa, Mastercard, RuPay)',
+                    title: 'Credit / Debit Card & Netbanking',
+                    desc: 'Secure 256-bit encrypted checkout via Razorpay',
+                    isOnline: true
+                  },
+                  {
+                    id: 'Cash on Delivery (Pay upon delivery)',
+                    title: 'Cash / UPI on Delivery',
+                    desc: 'Pay cash or scan delivery partner’s QR code upon delivery',
+                    isOnline: false
+                  }
+                ].map((m) => {
+                  const isSelected = paymentMethod === m.id;
+                  return (
+                    <div
+                      key={m.id}
+                      className={`payment-method-box ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setPaymentMethod(m.id)}
+                    >
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        checked={isSelected}
+                        onChange={() => setPaymentMethod(m.id)}
+                        className="payment-radio-input"
+                      />
+                      <div className="payment-method-text">
+                        <div className="payment-name-row">
+                          <span className="payment-method-title">{m.title}</span>
+                          {m.badge && <span className="payment-pill-tag">{m.badge}</span>}
                         </div>
+                        <span className="payment-method-desc">{m.desc}</span>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="payment-guarantee-note">
-                  <ShieldCheck size={18} color="var(--primary-green)" />
-                  <span>100% Satisfaction Guarantee: Free replacement if not satisfied.</span>
-                </div>
-
-                <div className="step-nav-buttons">
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => setStep(2)}
-                  >
-                    Back to Delivery
-                  </button>
-                  <button
-                    className="btn btn-primary btn-lg"
-                    disabled={isProcessing}
-                    onClick={handleCompleteOrder}
-                  >
-                    {isProcessing ? 'Confirming Order...' : `Place Order • ₹${grandTotal}`}
-                  </button>
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+
+              {/* Bottom Complete Order CTA */}
+              <div className="single-page-cta-bar">
+                <div className="guarantee-text-row">
+                  <ShieldCheck size={18} color="#075437" />
+                  <span>100% Quality Assurance: Freshness guaranteed or instant free replacement.</span>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg btn-block btn-final-checkout"
+                  disabled={isProcessing}
+                  onClick={handleCompleteOrder}
+                >
+                  {isProcessing ? (
+                    'Processing Order...'
+                  ) : paymentMethod.includes('Cash') ? (
+                    `Place Cash on Delivery Order • ₹${grandTotal}`
+                  ) : (
+                    `Pay via Razorpay • ₹${grandTotal}`
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column: Order Summary Preview */}
-          <div className="checkout-summary-col">
-            <div className="order-summary-box">
-              <h3 className="summary-title">Order Items ({cartItems.length})</h3>
+          {/* RIGHT COLUMN: STICKY ORDER SUMMARY & BILL DETAILS */}
+          <div className="checkout-sidebar-col">
+            {/* Coupon Promo Box */}
+            <div className="sidebar-summary-card">
+              <div className="coupon-box-header">
+                <Tag size={16} color="#075437" />
+                <h4>Apply Discount Coupon</h4>
+              </div>
 
-              <div className="summary-items-list">
-                {cartItems.map((item) => (
-                  <div key={item.key} className="summary-item-row">
-                    <img
-                      src={item.product.images?.[0]}
-                      alt=""
-                      className="summary-item-thumb"
-                    />
-                    <div className="summary-item-details">
-                      <span className="summary-name">{item.product.name}</span>
-                      <span className="summary-weight">
-                        {item.weight.label} × {item.quantity}
-                      </span>
-                    </div>
-                    <span className="summary-price">
-                      ₹{item.weight.price * item.quantity}
-                    </span>
+              {appliedCoupon ? (
+                <div className="applied-coupon-pill">
+                  <div className="applied-coupon-info">
+                    <span className="applied-code">{appliedCoupon.code}</span>
+                    <span className="applied-desc">Saved ₹{couponSavings}</span>
                   </div>
-                ))}
+                  <button
+                    type="button"
+                    className="btn-remove-coupon"
+                    onClick={removeCoupon}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyCoupon} className="coupon-input-form">
+                  <input
+                    type="text"
+                    placeholder="Enter code: FRESH100 / MADHUR20"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="coupon-text-input"
+                  />
+                  <button type="submit" className="btn-apply-coupon">
+                    Apply
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Bill Summary */}
+            <div className="sidebar-summary-card">
+              <h3 className="bill-card-title">Order Bill Summary</h3>
+
+              <div className="bill-breakdown-list">
+                <div className="bill-row">
+                  <span className="bill-lbl">Item Total ({cartItems.length} cuts)</span>
+                  <span className="bill-val">₹{subtotal}</span>
+                </div>
+
+                {couponSavings > 0 && (
+                  <div className="bill-row row-discount">
+                    <span className="bill-lbl">Coupon Discount</span>
+                    <span className="bill-val">- ₹{couponSavings}</span>
+                  </div>
+                )}
+
+                <div className="bill-row">
+                  <span className="bill-lbl">Delivery Fee</span>
+                  <span className="bill-val">
+                    {deliveryFee === 0 ? (
+                      <span className="badge-free-delivery">FREE</span>
+                    ) : (
+                      `₹${deliveryFee}`
+                    )}
+                  </span>
+                </div>
+
+                <div className="bill-row bill-grand-total">
+                  <span className="bill-lbl">Total Amount</span>
+                  <span className="bill-val">₹{grandTotal}</span>
+                </div>
               </div>
 
-              <div className="summary-totals">
-                <div className="summary-total-row">
-                  <span>Subtotal</span>
-                  <span>₹{subtotal}</span>
+              {totalSavings > 0 && (
+                <div className="savings-highlight-pill">
+                  <Sparkles size={14} color="#065F46" />
+                  <span>You are saving ₹{totalSavings} on this order!</span>
                 </div>
-                <div className="summary-total-row">
-                  <span>Delivery</span>
-                  <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
-                </div>
-                <div className="summary-divider" />
-                <div className="summary-total-row grand">
-                  <span>Total Amount</span>
-                  <span>₹{grandTotal}</span>
-                </div>
-              </div>
+              )}
 
-              {/* Delivery Address Snapshot */}
-              <div className="summary-address-snapshot">
-                <MapPin size={16} color="var(--primary-green)" />
+              {/* Delivery Destination Mini Summary */}
+              <div className="delivery-destination-box">
+                <Truck size={16} color="#075437" />
                 <div>
-                  <span className="snapshot-title">Delivering to {address.type}:</span>
-                  <p className="snapshot-addr">
-                    {address.house}, {address.area}, {address.city} - {address.pincode}
-                  </p>
+                  {activeAddress ? (
+                    <>
+                      <strong className="dest-title">Delivering to {activeAddress.type || 'Home'} ({activeAddress.name})</strong>
+                      <p className="dest-text">{activeAddress.house}, {activeAddress.area}, {activeAddress.city} ({activeAddress.pincode})</p>
+                    </>
+                  ) : (
+                    <>
+                      <strong className="dest-title text-warning">No Delivery Address Selected</strong>
+                      <p className="dest-text">Please add/select an address on the left to proceed</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Selected Slot Mini Summary */}
+              <div className="selected-slot-box">
+                <Clock size={16} color="#075437" />
+                <div>
+                  <strong className="slot-mini-title">Slot: {selectedSlotObj.title}</strong>
+                  <p className="slot-mini-desc">{selectedSlotObj.desc}</p>
                 </div>
               </div>
             </div>
@@ -533,140 +1005,585 @@ export const CheckoutPage = ({ navigate }) => {
       </div>
 
       <style>{`
-        .checkout-page {
-          padding-top: 18px;
-          padding-bottom: 48px;
+        .single-page-checkout {
+          padding-top: 16px;
+          padding-bottom: 60px;
+          background-color: var(--bg-main);
+          min-height: calc(100vh - 120px);
         }
 
-        .checkout-title {
-          font-size: 1.8rem;
-          font-weight: 800;
-          color: var(--primary-green);
-          margin-bottom: 20px;
-        }
-
-        .checkout-stepper {
+        .checkout-top-nav {
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 36px;
-          margin-bottom: 28px;
-          position: relative;
+          justify-content: space-between;
+          margin-bottom: 12px;
         }
 
-        .stepper-item {
-          display: flex;
+        .btn-back-nav {
+          display: inline-flex;
           align-items: center;
-          gap: 8px;
-          color: var(--text-muted);
+          gap: 6px;
+          color: var(--deep-forest-green);
+          font-weight: 700;
+          font-size: 0.88rem;
+          background: none;
+          border: none;
           cursor: pointer;
+          padding: 6px 0;
+          transition: transform 0.15s ease;
         }
 
-        .stepper-item.active {
-          color: var(--primary-green);
+        .btn-back-nav:hover {
+          transform: translateX(-3px);
+        }
+
+        .secure-badge-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: #ECFDF5;
+          color: #065F46;
+          border: 1px solid #A7F3D0;
+          padding: 4px 12px;
+          border-radius: var(--radius-pill);
+          font-size: 0.76rem;
           font-weight: 700;
         }
 
-        .stepper-item.completed {
-          color: var(--primary-green);
-        }
-
-        .stepper-circle {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          border: 2px solid var(--border-color);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.8rem;
+        .checkout-main-title {
+          font-size: 1.6rem;
           font-weight: 800;
-          background: #FFFFFF;
+          color: var(--charcoal);
+          margin-bottom: 24px;
         }
 
-        .stepper-item.active .stepper-circle {
-          border-color: var(--primary-green);
-          background: var(--primary-green);
-          color: #FFFFFF;
-        }
-
-        .stepper-item.completed .stepper-circle {
-          border-color: var(--primary-green);
-          background: var(--surface-light-green);
-          color: var(--primary-green);
-        }
-
-        .stepper-label {
-          font-size: 0.875rem;
-        }
-
-        .checkout-layout-grid {
+        .checkout-grid-layout {
           display: grid;
-          grid-template-columns: 1.4fr 1fr;
-          gap: 28px;
+          grid-template-columns: 1fr;
+          gap: 24px;
         }
 
-        .checkout-card {
+        @media (min-width: 1024px) {
+          .checkout-grid-layout {
+            grid-template-columns: 1.55fr 1fr;
+            gap: 32px;
+            align-items: start;
+          }
+          .checkout-sidebar-col {
+            position: sticky;
+            top: 90px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          }
+        }
+
+        .checkout-sections-col {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .checkout-section-card {
           background: #FFFFFF;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
-          padding: 24px;
+          padding: 22px 24px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
-        .step-card-header {
+        .section-card-header {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           gap: 12px;
-          margin-bottom: 20px;
+          margin-bottom: 18px;
           padding-bottom: 14px;
           border-bottom: 1px solid var(--border-light);
         }
 
-        .step-heading {
-          font-size: 1.2rem;
-          font-weight: 800;
-          color: var(--primary-green);
+        .address-section-header {
+          flex-wrap: wrap;
+          gap: 12px;
         }
 
-        .step-subheading {
-          font-size: 0.82rem;
+        .header-icon-box {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: var(--surface-light-green);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .header-title-text {
+          flex: 1;
+          min-width: 160px;
+        }
+
+        .header-title-text h3 {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: var(--charcoal);
+          margin: 0;
+        }
+
+        .header-title-text p {
+          font-size: 0.78rem;
           color: var(--text-muted);
+          margin: 2px 0 0 0;
+        }
+
+        .btn-add-more-cuts {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--deep-forest-green);
+          background: #EFF8F4;
+          border: 1px solid #C6F6D5;
+          padding: 6px 14px;
+          border-radius: var(--radius-pill);
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .btn-add-more-cuts:hover {
+          background: var(--deep-forest-green);
+          color: #FFFFFF;
+        }
+
+        /* Address Tabs Toggle */
+        .address-tabs-toggle {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #F1F5F9;
+          padding: 4px;
+          border-radius: 10px;
+        }
+
+        .address-tabs-toggle .tab-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 7px;
+          border: none;
+          background: transparent;
+          color: #64748B;
+          font-size: 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .address-tabs-toggle .tab-btn.active {
+          background: #FFFFFF;
+          color: var(--deep-forest-green);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Items List */
+        .checkout-items-list {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .checkout-item-row {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid var(--border-light);
+        }
+
+        .checkout-item-row:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .item-row-img {
+          width: 54px;
+          height: 54px;
+          border-radius: var(--radius-md);
+          object-fit: cover;
+          background: #EDF2F7;
+          flex-shrink: 0;
+        }
+
+        .item-row-info {
+          flex: 1;
+        }
+
+        .item-name {
+          font-size: 0.92rem;
+          font-weight: 700;
+          color: var(--charcoal);
+          margin: 0 0 4px 0;
+        }
+
+        .item-meta-tags {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .item-pack-tag {
+          font-size: 0.74rem;
+          font-weight: 700;
+          background: #EDF2F7;
+          color: #4A5568;
+          padding: 2px 7px;
+          border-radius: 4px;
+        }
+
+        .item-price-each {
+          font-size: 0.78rem;
+          color: var(--text-muted);
+        }
+
+        .item-qty-stepper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #F7FAFC;
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 3px 6px;
+        }
+
+        .stepper-btn {
+          width: 26px;
+          height: 26px;
+          border-radius: 6px;
+          background: #FFFFFF;
+          border: 1px solid var(--border-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--charcoal);
+          cursor: pointer;
+        }
+
+        .stepper-btn:hover {
+          background: #EDF2F7;
+        }
+
+        .stepper-count {
+          font-size: 0.88rem;
+          font-weight: 800;
+          min-width: 18px;
+          text-align: center;
+        }
+
+        .item-row-total {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 6px;
+          min-width: 60px;
+        }
+
+        .item-total-val {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: var(--deep-forest-green);
+        }
+
+        .item-remove-btn {
+          background: none;
+          border: none;
+          color: #E53E3E;
+          cursor: pointer;
+          padding: 2px;
+          opacity: 0.7;
+          transition: opacity 0.15s ease;
+        }
+
+        .item-remove-btn:hover {
+          opacity: 1;
+        }
+
+        /* Saved Address Cards Grid */
+        .saved-cards-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .saved-addr-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          background: #FAF9F5;
+          border: 1.5px solid #E2E8F0;
+          border-radius: var(--radius-md);
+          padding: 14px 16px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .saved-addr-card:hover {
+          border-color: #CBD5E0;
+        }
+
+        .saved-addr-card.selected {
+          background: #EFF8F4;
+          border-color: var(--deep-forest-green);
+        }
+
+        .saved-addr-left {
           margin-top: 2px;
         }
 
-        .address-tags-row {
+        .custom-radio {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          border: 2px solid #CBD5E0;
           display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #FFFFFF;
+        }
+
+        .custom-radio.checked {
+          border-color: var(--deep-forest-green);
+        }
+
+        .radio-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--deep-forest-green);
+        }
+
+        .saved-addr-content {
+          flex: 1;
+        }
+
+        .saved-addr-top-line {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+          flex-wrap: wrap;
+        }
+
+        .addr-tag-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: #075437;
+          color: #FFFFFF;
+          font-size: 0.7rem;
+          font-weight: 700;
+          padding: 2px 7px;
+          border-radius: var(--radius-pill);
+          text-transform: uppercase;
+        }
+
+        .addr-recipient-name {
+          font-size: 0.92rem;
+          color: var(--charcoal);
+        }
+
+        .addr-phone {
+          font-size: 0.82rem;
+          color: #64748B;
+        }
+
+        .addr-full-text {
+          font-size: 0.84rem;
+          color: #4A5568;
+          line-height: 1.4;
+          margin: 0 0 10px 0;
+        }
+
+        .saved-addr-actions {
+          display: flex;
+          gap: 12px;
+        }
+
+        .btn-addr-action {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: none;
+          border: none;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: var(--deep-forest-green);
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .btn-addr-action.delete {
+          color: #E53E3E;
+        }
+
+        .no-address-box {
+          text-align: center;
+          padding: 30px 16px;
+          background: #F8FAFC;
+          border: 1.5px dashed #CBD5E0;
+          border-radius: var(--radius-md);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
           gap: 10px;
         }
 
-        .address-tag-btn {
+        .no-address-box h4 {
+          margin: 0;
+          font-size: 1rem;
+          color: var(--charcoal);
+        }
+
+        .no-address-box p {
+          margin: 0;
+          font-size: 0.82rem;
+          color: var(--text-muted);
+        }
+
+        /* Address Form */
+        .address-edit-form {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          background: #FAF9F5;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: 18px;
+        }
+
+        .form-mode-title {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #E2E8F0;
+        }
+
+        .form-mode-title h4 {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: var(--charcoal);
+          margin: 0;
+        }
+
+        .btn-link-sm {
+          background: none;
+          border: none;
+          color: var(--deep-forest-green);
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .form-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .form-grid-3 {
+          display: grid;
+          grid-template-columns: 1.2fr 1fr 1fr;
+          gap: 14px;
+        }
+
+        @media (max-width: 600px) {
+          .form-grid-2, .form-grid-3 {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .form-field-group {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .form-field-label {
+          font-size: 0.76rem;
+          font-weight: 800;
+          color: #4A5568;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+
+        .form-clean-input {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1.5px solid #CBD5E0;
+          border-radius: 8px;
+          font-size: 0.88rem;
+          color: var(--charcoal);
+          background: #FFFFFF;
+          outline: none;
+          transition: border-color 0.15s ease;
+        }
+
+        .form-clean-input:focus {
+          border-color: var(--deep-forest-green);
+        }
+
+        .address-type-pill-group {
+          display: flex;
+          gap: 8px;
+        }
+
+        .address-type-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
           padding: 8px 16px;
-          border-radius: var(--radius-md);
-          border: 1.5px solid var(--border-color);
+          border-radius: 8px;
+          font-size: 0.82rem;
+          font-weight: 700;
+          border: 1.5px solid #CBD5E0;
+          background: #FFFFFF;
+          color: #4A5568;
+          cursor: pointer;
+        }
+
+        .address-type-btn.active {
+          border-color: var(--deep-forest-green);
+          background: #EFF8F4;
+          color: var(--deep-forest-green);
+        }
+
+        .form-action-row {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 12px;
+          margin-top: 6px;
+        }
+
+        .btn-cancel-flat {
+          padding: 8px 16px;
           font-size: 0.85rem;
           font-weight: 700;
-          color: var(--text-dark);
-          background: var(--bg-main);
-          transition: all var(--transition-fast);
+          color: #718096;
+          background: none;
+          border: none;
+          cursor: pointer;
         }
 
-        .address-tag-btn.active {
-          border-color: var(--primary-green);
-          background: var(--surface-light-green);
-          color: var(--primary-green);
-        }
-
-        .slots-list {
+        /* Delivery Slots */
+        .delivery-slots-grid {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          margin-bottom: 24px;
+          gap: 10px;
         }
 
-        .slot-card {
+        .slot-option-card {
           display: flex;
           align-items: flex-start;
           gap: 12px;
@@ -674,49 +1591,66 @@ export const CheckoutPage = ({ navigate }) => {
           border-radius: var(--radius-md);
           border: 1.5px solid var(--border-color);
           cursor: pointer;
-          transition: all var(--transition-fast);
+          transition: all 0.15s ease;
         }
 
-        .slot-card.selected {
-          border-color: var(--primary-green);
-          background: var(--surface-light-green);
+        .slot-option-card.selected {
+          border-color: var(--deep-forest-green);
+          background: #EFF8F4;
         }
 
-        .slot-title-row {
+        .slot-radio-input {
+          margin-top: 3px;
+          cursor: pointer;
+          accent-color: var(--deep-forest-green);
+        }
+
+        .slot-option-body {
+          flex: 1;
+        }
+
+        .slot-header-row {
           display: flex;
           align-items: center;
           gap: 8px;
+          flex-wrap: wrap;
         }
 
-        .slot-title {
-          font-size: 0.95rem;
-          color: var(--text-dark);
+        .slot-option-title {
+          font-size: 0.92rem;
+          color: var(--charcoal);
         }
 
-        .slot-desc {
-          font-size: 0.8rem;
+        .slot-badge-tag {
+          font-size: 0.68rem;
+          font-weight: 800;
+          background: #EDF2F7;
+          color: #4A5568;
+          padding: 2px 7px;
+          border-radius: var(--radius-pill);
+          text-transform: uppercase;
+        }
+
+        .slot-badge-tag.express {
+          background: var(--brand-yellow);
+          color: var(--charcoal);
+        }
+
+        .slot-option-desc {
+          font-size: 0.78rem;
           color: var(--text-muted);
-          margin-top: 4px;
+          margin: 3px 0 0 0;
         }
 
-        .step-nav-buttons {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          margin-top: 24px;
-          padding-top: 16px;
-          border-top: 1px solid var(--border-light);
-        }
-
-        .payment-options-list {
+        /* Payment Methods */
+        .payment-methods-grid {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           margin-bottom: 20px;
         }
 
-        .payment-option-card {
+        .payment-method-box {
           display: flex;
           align-items: flex-start;
           gap: 12px;
@@ -724,170 +1658,257 @@ export const CheckoutPage = ({ navigate }) => {
           border-radius: var(--radius-md);
           border: 1.5px solid var(--border-color);
           cursor: pointer;
+          transition: all 0.15s ease;
         }
 
-        .payment-option-card.selected {
-          border-color: var(--primary-green);
-          background: var(--surface-light-green);
+        .payment-method-box.selected {
+          border-color: var(--deep-forest-green);
+          background: #EFF8F4;
         }
 
-        .payment-title-row {
+        .payment-radio-input {
+          margin-top: 3px;
+          cursor: pointer;
+          accent-color: var(--deep-forest-green);
+        }
+
+        .payment-method-text {
+          flex: 1;
+        }
+
+        .payment-name-row {
           display: flex;
           align-items: center;
           gap: 8px;
         }
 
-        .payment-name {
+        .payment-method-title {
           font-size: 0.92rem;
           font-weight: 700;
-          color: var(--text-dark);
+          color: var(--charcoal);
         }
 
-        .payment-desc {
+        .payment-pill-tag {
+          font-size: 0.68rem;
+          font-weight: 800;
+          background: #DEF7EC;
+          color: #03543F;
+          padding: 2px 7px;
+          border-radius: var(--radius-pill);
+        }
+
+        .payment-method-desc {
           display: block;
           font-size: 0.78rem;
           color: var(--text-muted);
           margin-top: 2px;
         }
 
-        .payment-guarantee-note {
+        .single-page-cta-bar {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding-top: 16px;
+          border-top: 1px solid var(--border-light);
+        }
+
+        .guarantee-text-row {
           display: flex;
           align-items: center;
           gap: 8px;
-          background: var(--surface-light-green);
-          padding: 10px 14px;
-          border-radius: var(--radius-md);
           font-size: 0.8rem;
-          color: var(--primary-green);
+          color: #065F46;
           font-weight: 600;
-          margin-bottom: 20px;
         }
 
-        /* Order Summary Column */
-        .order-summary-box {
+        .btn-final-checkout {
+          font-size: 1.05rem;
+          padding: 14px;
+          box-shadow: 0 4px 14px rgba(7, 84, 55, 0.25);
+        }
+
+        /* Sidebar Cards */
+        .sidebar-summary-card {
           background: #FFFFFF;
           border: 1px solid var(--border-color);
           border-radius: var(--radius-lg);
           padding: 20px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
-        .summary-title {
-          font-size: 1rem;
-          font-weight: 800;
-          color: var(--primary-green);
-          margin-bottom: 14px;
-        }
-
-        .summary-items-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-bottom: 16px;
-          max-height: 240px;
-          overflow-y: auto;
-        }
-
-        .summary-item-row {
+        .coupon-box-header {
           display: flex;
           align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .coupon-box-header h4 {
+          font-size: 0.9rem;
+          font-weight: 800;
+          color: var(--charcoal);
+          margin: 0;
+        }
+
+        .coupon-input-form {
+          display: flex;
+          gap: 8px;
+        }
+
+        .coupon-text-input {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1.5px solid #CBD5E0;
+          border-radius: 8px;
+          font-size: 0.84rem;
+          outline: none;
+          text-transform: uppercase;
+        }
+
+        .coupon-text-input:focus {
+          border-color: var(--deep-forest-green);
+        }
+
+        .btn-apply-coupon {
+          padding: 8px 16px;
+          background: var(--deep-forest-green);
+          color: #FFFFFF;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.84rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .applied-coupon-pill {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #EFF8F4;
+          border: 1px solid #A7F3D0;
+          padding: 8px 12px;
+          border-radius: 8px;
+        }
+
+        .applied-code {
+          font-size: 0.85rem;
+          font-weight: 800;
+          color: var(--deep-forest-green);
+        }
+
+        .applied-desc {
+          font-size: 0.75rem;
+          color: #065F46;
+          margin-left: 8px;
+        }
+
+        .btn-remove-coupon {
+          background: none;
+          border: none;
+          color: #E53E3E;
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        /* Bill Card */
+        .bill-card-title {
+          font-size: 1rem;
+          font-weight: 800;
+          color: var(--charcoal);
+          margin: 0 0 16px 0;
+          padding-bottom: 10px;
+          border-bottom: 1px solid var(--border-light);
+        }
+
+        .bill-breakdown-list {
+          display: flex;
+          flex-direction: column;
           gap: 10px;
         }
 
-        .summary-item-thumb {
-          width: 44px;
-          height: 44px;
-          border-radius: var(--radius-xs);
-          object-fit: cover;
-        }
-
-        .summary-item-details {
-          flex: 1;
+        .bill-row {
           display: flex;
-          flex-direction: column;
-        }
-
-        .summary-name {
-          font-size: 0.82rem;
-          font-weight: 700;
-          color: var(--text-dark);
-        }
-
-        .summary-weight {
-          font-size: 0.72rem;
-          color: var(--text-muted);
-        }
-
-        .summary-price {
-          font-size: 0.875rem;
-          font-weight: 800;
-          color: var(--primary-green);
-        }
-
-        .summary-totals {
-          border-top: 1px dashed var(--border-color);
-          padding-top: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .summary-total-row {
-          display: flex;
+          align-items: center;
           justify-content: space-between;
-          font-size: 0.85rem;
-          color: var(--text-dark);
+          font-size: 0.88rem;
+          color: #4A5568;
         }
 
-        .summary-total-row.grand {
-          font-size: 1.15rem;
+        .bill-row.row-discount {
+          color: #059669;
+          font-weight: 700;
+        }
+
+        .badge-free-delivery {
+          font-size: 0.72rem;
           font-weight: 800;
-          color: var(--primary-green);
-          padding-top: 4px;
+          color: #059669;
+          background: #D1FAE5;
+          padding: 2px 7px;
+          border-radius: 4px;
         }
 
-        .summary-address-snapshot {
-          margin-top: 18px;
-          padding-top: 14px;
-          border-top: 1px solid var(--border-light);
+        .bill-grand-total {
+          border-top: 1.5px dashed #CBD5E0;
+          padding-top: 12px;
+          margin-top: 4px;
+          font-size: 1.18rem;
+          font-weight: 800;
+          color: var(--charcoal);
+        }
+
+        .savings-highlight-pill {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: #DEF7EC;
+          color: #03543F;
+          font-size: 0.8rem;
+          font-weight: 700;
+          padding: 8px 12px;
+          border-radius: 8px;
+          margin-top: 14px;
+        }
+
+        .delivery-destination-box, .selected-slot-box {
           display: flex;
           align-items: flex-start;
-          gap: 8px;
+          gap: 10px;
+          background: #FAF9F5;
+          border: 1px solid #E2E8F0;
+          border-radius: 8px;
+          padding: 12px;
+          margin-top: 12px;
         }
 
-        .snapshot-title {
+        .dest-title, .slot-mini-title {
+          display: block;
+          font-size: 0.8rem;
+          color: var(--charcoal);
+        }
+
+        .dest-title.text-warning {
+          color: #C05621;
+        }
+
+        .dest-text, .slot-mini-desc {
           font-size: 0.75rem;
-          font-weight: 700;
-          color: var(--text-dark);
-        }
-
-        .snapshot-addr {
-          font-size: 0.78rem;
           color: var(--text-muted);
-          line-height: 1.35;
-          margin-top: 2px;
+          margin: 2px 0 0 0;
         }
 
-        @media (min-width: 1024px) {
-          .checkout-layout-grid {
-            grid-template-columns: 1.5fr 1fr;
-            gap: 36px;
-            align-items: start;
-          }
-          .checkout-summary-col {
-            position: sticky;
-            top: 100px;
-          }
-        }
-
-        @media (max-width: 900px) {
-          .checkout-layout-grid {
-            grid-template-columns: 1fr;
-          }
-          .checkout-stepper {
-            gap: 16px;
-          }
+        .empty-cart-card {
+          text-align: center;
+          padding: 60px 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
         }
       `}</style>
     </div>
   );
 };
+
+export default CheckoutPage;

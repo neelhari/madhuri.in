@@ -39,7 +39,7 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
       <div
         className="category-promo-banner-full"
         style={{
-          backgroundImage: `linear-gradient(to right, rgba(7, 84, 55, 0.94) 0%, rgba(7, 84, 55, 0.82) 44%, rgba(0, 0, 0, 0.25) 100%), url('${bannerBg}')`
+          backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.05) 100%), url('${bannerBg}')`
         }}
       >
         <div className="app-container promo-content-wrap">
@@ -48,7 +48,7 @@ export const CategoryPage = ({ categoryId = 'all', navigate }) => {
             <h2 className="promo-banner-title">
               {currentCategoryInfo ? currentCategoryInfo.name : 'All Prime Cuts'}
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginBottom: '10px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.85rem', marginBottom: '10px' }}>
               {bannerTagline}
             </p>
           </div>

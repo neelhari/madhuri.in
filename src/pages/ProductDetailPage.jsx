@@ -72,10 +72,16 @@ export const ProductDetailPage = ({ slug, navigate }) => {
     if (currentQty === 0) {
       addToCart(product, selectedWeight.id, 1);
     }
-    navigate('/cart');
+    navigate('/checkout');
   };
 
-  const relatedProducts = (products || []).filter((p) => p.id !== product.id).slice(0, 3);
+  const sameCategory = (products || []).filter(
+    (p) => p.id !== product.id && p.category === product.category
+  );
+  const otherCategories = (products || []).filter(
+    (p) => p.id !== product.id && p.category !== product.category
+  );
+  const relatedProducts = [...sameCategory, ...otherCategories].slice(0, 4);
 
   return (
     <div className="product-detail-page animate-fade-in">
@@ -548,6 +554,32 @@ export const ProductDetailPage = ({ slug, navigate }) => {
           border: none;
           cursor: pointer;
           padding: 0;
+        }
+
+        .pdp-related-section {
+          margin-top: 48px;
+          padding-top: 36px;
+          border-top: 1px solid var(--border-color);
+        }
+
+        .products-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px;
+        }
+
+        @media (min-width: 768px) {
+          .products-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .products-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+          }
         }
 
         @media (max-width: 900px) {
