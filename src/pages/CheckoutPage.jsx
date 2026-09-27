@@ -15,6 +15,7 @@ import { useCart } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
 import { useOrders } from '../context/OrderContext';
 import { useToast } from '../context/ToastContext';
+import { openRazorpayPayment } from '../lib/razorpay';
 
 export const CheckoutPage = ({ navigate }) => {
   const { cartItems, grandTotal, subtotal, deliveryFee, totalSavings, clearCart } = useCart();
@@ -72,34 +73,73 @@ export const CheckoutPage = ({ navigate }) => {
   };
 
   const handleCompleteOrder = () => {
+    const isCOD = paymentMethod.includes('Cash');
+
+    const baseOrderData = {
+      items: cartItems.map((item) => ({
+        productId: item.productId,
+        name: item.product.name,
+        weight: item.weight.label,
+        price: item.weight.price,
+        quantity: item.quantity,
+        image: item.product.images?.[0]
+      })),
+      address,
+      deliverySlot,
+      summary: {
+        subtotal,
+        deliveryFee,
+        total: grandTotal,
+        savings: totalSavings
+      }
+    };
+
+    if (isCOD) {
+      setIsProcessing(true);
+      setTimeout(() => {
+        const newOrder = placeOrder({
+          ...baseOrderData,
+          paymentMethod: 'Cash on Delivery',
+          paymentStatus: 'Pending'
+        });
+        clearCart();
+        setIsProcessing(false);
+        showToast('Order confirmed with Cash on Delivery!', 'success');
+        navigate(`/order-confirmation?orderId=${newOrder.id}`);
+      }, 600);
+      return;
+    }
+
+    // Online Payment via Razorpay
     setIsProcessing(true);
-
-    setTimeout(() => {
-      const orderData = {
-        items: cartItems.map((item) => ({
-          productId: item.productId,
-          name: item.product.name,
-          weight: item.weight.label,
-          price: item.weight.price,
-          quantity: item.quantity,
-          image: item.product.images?.[0]
-        })),
-        address,
-        deliverySlot,
-        paymentMethod,
-        summary: {
-          subtotal,
-          deliveryFee,
-          total: grandTotal,
-          savings: totalSavings
-        }
-      };
-
-      const newOrder = placeOrder(orderData);
-      clearCart();
-      setIsProcessing(false);
-      navigate(`/order-confirmation?orderId=${newOrder.id}`);
-    }, 1200);
+    openRazorpayPayment({
+      amount: grandTotal,
+      customerName: address.name,
+      customerPhone: address.phone,
+      customerEmail: address.email || 'care@madurfresh.in',
+      notes: {
+        deliveryArea: address.area,
+        pincode: address.pincode,
+        deliverySlot
+      },
+      onSuccess: (paymentRes) => {
+        const newOrder = placeOrder({
+          ...baseOrderData,
+          paymentMethod: `${paymentMethod} (Razorpay: ${paymentRes.paymentId})`,
+          paymentStatus: 'Paid',
+          transactionId: paymentRes.paymentId
+        });
+        clearCart();
+        setIsProcessing(false);
+        showToast('Payment successful! Order confirmed.', 'success');
+        navigate(`/order-confirmation?orderId=${newOrder.id}`);
+      },
+      onFailure: (error) => {
+        setIsProcessing(false);
+        const errorMsg = error?.message || 'Payment not completed';
+        showToast(errorMsg, 'warning');
+      }
+    });
   };
 
   const steps = [
