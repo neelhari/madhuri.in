@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BRAND_INFO } from '../data/products';
+import { useStoreData } from './StoreDataContext';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+  const { storeSettings, coupons } = useStoreData();
+
   const [cartItems, setCartItems] = useState(() => {
     try {
       const saved = localStorage.getItem('madurfresh_cart');
@@ -76,15 +79,49 @@ export const CartProvider = ({ children }) => {
   };
 
   const applyCoupon = (code) => {
-    const normalized = code.trim().toUpperCase();
+    const normalized = (code || '').trim().toUpperCase();
+    if (!normalized) {
+      return { success: false, message: 'Please enter a coupon code.' };
+    }
+
+    // Check dynamic coupons from database / admin panel
+    const matchedCoupon = coupons?.find(
+      (c) => c.code.toUpperCase() === normalized && c.isActive
+    );
+
+    if (matchedCoupon) {
+      if (matchedCoupon.minOrderValue && subtotal < matchedCoupon.minOrderValue) {
+        return {
+          success: false,
+          message: `Minimum order value of ₹${matchedCoupon.minOrderValue} required for this coupon.`
+        };
+      }
+
+      setAppliedCoupon({
+        code: matchedCoupon.code,
+        discount: matchedCoupon.discountValue,
+        type: matchedCoupon.discountType === 'percent' ? 'percentage' : 'fixed',
+        label:
+          matchedCoupon.discountType === 'percent'
+            ? `${matchedCoupon.discountValue}% Off`
+            : `₹${matchedCoupon.discountValue} Flat Off`
+      });
+
+      return {
+        success: true,
+        message: `Coupon ${matchedCoupon.code} applied successfully!`
+      };
+    }
+
+    // Fallback default coupons
     if (normalized === 'MADUR50') {
       setAppliedCoupon({ code: 'MADUR50', discount: 50, type: 'fixed', label: '₹50 Flat Off' });
       return { success: true, message: 'Coupon MADUR50 applied! Saved ₹50' };
     } else if (normalized === 'FRESH10') {
-      setAppliedCoupon({ code: 'FRESH10', discount: 0.10, type: 'percentage', label: '10% Off' });
+      setAppliedCoupon({ code: 'FRESH10', discount: 10, type: 'percentage', label: '10% Off' });
       return { success: true, message: 'Coupon FRESH10 applied! Saved 10%' };
     } else {
-      return { success: false, message: 'Invalid coupon code. Try MADUR50 or FRESH10.' };
+      return { success: false, message: 'Invalid or expired coupon code.' };
     }
   };
 
@@ -93,6 +130,16 @@ export const CartProvider = ({ children }) => {
   };
 
   // Calculations
+  const activeDeliveryThreshold =
+    storeSettings?.freeDeliveryThreshold !== undefined
+      ? Number(storeSettings.freeDeliveryThreshold)
+      : BRAND_INFO.freeDeliveryThreshold;
+
+  const activeDeliveryFee =
+    storeSettings?.deliveryFee !== undefined
+      ? Number(storeSettings.deliveryFee)
+      : BRAND_INFO.deliveryFee;
+
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const subtotal = cartItems.reduce(
@@ -110,18 +157,19 @@ export const CartProvider = ({ children }) => {
   let couponSavings = 0;
   if (appliedCoupon) {
     if (appliedCoupon.type === 'fixed') {
-      couponSavings = Math.min(appliedCoupon.discount, subtotal);
+      couponSavings = Math.min(Number(appliedCoupon.discount) || 0, subtotal);
     } else if (appliedCoupon.type === 'percentage') {
-      couponSavings = Math.round(subtotal * appliedCoupon.discount);
+      const pct = (Number(appliedCoupon.discount) || 0) / 100;
+      couponSavings = Math.round(subtotal * pct);
     }
   }
 
-  const deliveryFee = subtotal === 0 ? 0 : (subtotal >= BRAND_INFO.freeDeliveryThreshold ? 0 : BRAND_INFO.deliveryFee);
+  const deliveryFee = subtotal === 0 ? 0 : (subtotal >= activeDeliveryThreshold ? 0 : activeDeliveryFee);
   const grandTotal = Math.max(0, subtotal - couponSavings + deliveryFee);
   const totalSavings = productSavings + couponSavings;
 
-  const freeDeliveryRemaining = Math.max(0, BRAND_INFO.freeDeliveryThreshold - subtotal);
-  const freeDeliveryProgress = Math.min(100, Math.round((subtotal / BRAND_INFO.freeDeliveryThreshold) * 100));
+  const freeDeliveryRemaining = Math.max(0, activeDeliveryThreshold - subtotal);
+  const freeDeliveryProgress = Math.min(100, Math.round((subtotal / (activeDeliveryThreshold || 1)) * 100));
 
   return (
     <CartContext.Provider
